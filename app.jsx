@@ -1300,7 +1300,7 @@
          </div>
          <div className="footer-bottom">
            <p>{secretTap} {new Date().getFullYear()} JVG Recruitment Solutions. All rights reserved.</p>
-           <p>Recruitment Agency Nigeria &nbsp;|&nbsp; HR Outsourcing &nbsp;|&nbsp; Staffing Agency Abuja &nbsp;|&nbsp; Jobs in Lagos</p>
+           <p>Recruitment Agency Nigeria &nbsp;|&nbsp; HR Outsourcing &nbsp;|&nbsp; Staffing Agency Abuja</p>
          </div>
        </footer>
      );
