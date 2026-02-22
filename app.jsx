@@ -38,7 +38,7 @@
      try { localStorage.setItem('jvg_jobs', JSON.stringify(jobs)); } catch {}
    }
    
-   /* ─── ENQUIRIES STORAGE (Employers + HR Professionals) ─── */
+   /* ─── ENQUIRIES STORAGE ─── */
    function loadEnquiries() {
      try {
        const saved = localStorage.getItem('jvg_enquiries');
@@ -64,6 +64,31 @@
      }, []);
      const ref = useCallback((el, i = refs.current.length) => { refs.current[i] = el; }, []);
      return ref;
+   }
+   
+   /* ── Star particles component ── */
+   function StarField() {
+     const stars = Array.from({ length: 55 }, (_, i) => ({
+       id: i,
+       top:   `${Math.random() * 100}%`,
+       left:  `${Math.random() * 100}%`,
+       dur:   `${2 + Math.random() * 4}s`,
+       delay: `${Math.random() * 5}s`,
+       size:  Math.random() > 0.85 ? '3px' : '2px',
+       opacity: 0.3 + Math.random() * 0.5,
+     }));
+     return (
+       <div className="hero-stars">
+         {stars.map(s => (
+           <div key={s.id} className="star" style={{
+             top: s.top, left: s.left,
+             '--dur': s.dur, '--delay': s.delay,
+             width: s.size, height: s.size,
+             opacity: s.opacity,
+           }} />
+         ))}
+       </div>
+     );
    }
    
    /* ══════════════════════════════════════════════════
@@ -115,7 +140,7 @@
    }
    
    /* ══════════════════════════════════════════════════
-      HERO
+      HERO — LUXURIOUS DEEP BLUE
       ══════════════════════════════════════════════════ */
    function Hero() {
      const stats = [
@@ -127,9 +152,29 @@
      return (
        <section className="hero" id="home">
          <div className="hero-bg">
-           <div className="hc hc1" /><div className="hc hc2" /><div className="hc hc3" />
-           <div className="hdots" /><div className="hero-glow" />
+           {/* Animated glowing orbs */}
+           <div className="hero-orb hero-orb-1" />
+           <div className="hero-orb hero-orb-2" />
+           <div className="hero-orb hero-orb-3" />
+           {/* Geometric rings */}
+           <div className="hc hc1" />
+           <div className="hc hc2" />
+           <div className="hc hc3" />
+           {/* Dot grid */}
+           <div className="hdots" />
+           {/* Light beams */}
+           <div className="hero-beam" />
+           <div className="hero-beam-2" />
+           {/* Scanline depth effect */}
+           <div className="hero-scanline" />
+           {/* Star field */}
+           <StarField />
+           {/* Center radial glow */}
+           <div className="hero-glow" />
          </div>
+         {/* Bottom edge glow line */}
+         <div className="hero-bottom-glow" />
+   
          <div className="hero-content">
            <div className="hero-badge"><span className="hero-badge-dot" />Nigeria's Trusted Recruitment Partner</div>
            <h1 className="hero-title">
@@ -282,6 +327,83 @@
        </section>
      );
    }
+
+   /* ══════════════════════════════════════════════════
+      CV UPLOAD COMPONENT
+      ══════════════════════════════════════════════════ */
+   function CvUpload({ cvFile, setCvFile, required }) {
+     const [dragOver, setDragOver] = useState(false);
+     const inputRef = useRef(null);
+
+     const handleFile = (file) => {
+       if (!file) return;
+       const allowed = ['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+       if (!allowed.includes(file.type)) {
+         alert('Please upload a PDF or Word document (.pdf, .doc, .docx)');
+         return;
+       }
+       if (file.size > 5 * 1024 * 1024) {
+         alert('File size must be under 5MB.');
+         return;
+       }
+       setCvFile(file);
+     };
+
+     const onDrop = (e) => {
+       e.preventDefault(); setDragOver(false);
+       const file = e.dataTransfer.files[0];
+       handleFile(file);
+     };
+
+     const formatSize = (bytes) => {
+       if (bytes < 1024) return `${bytes} B`;
+       if (bytes < 1024 * 1024) return `${(bytes/1024).toFixed(1)} KB`;
+       return `${(bytes/(1024*1024)).toFixed(1)} MB`;
+     };
+
+     return (
+       <div
+         className={`cv-upload-zone${cvFile ? ' has-file' : ''}${dragOver ? ' drag-over' : ''}`}
+         onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+         onDragLeave={() => setDragOver(false)}
+         onDrop={onDrop}
+         onClick={() => !cvFile && inputRef.current?.click()}
+       >
+         <input
+           ref={inputRef}
+           type="file"
+           accept=".pdf,.doc,.docx"
+           onChange={e => handleFile(e.target.files[0])}
+           style={{display:'none'}}
+         />
+         {cvFile ? (
+           <>
+             <div className="cv-upload-icon">✅</div>
+             <div className="cv-file-name">
+               📄 {cvFile.name}
+               <button
+                 type="button"
+                 className="cv-remove-btn"
+                 onClick={e => { e.stopPropagation(); setCvFile(null); if(inputRef.current) inputRef.current.value=''; }}
+                 title="Remove file"
+               >✕</button>
+             </div>
+             <div className="cv-file-size">{formatSize(cvFile.size)} — ready to submit</div>
+           </>
+         ) : (
+           <>
+             <div className="cv-upload-icon">📎</div>
+             <div className="cv-upload-title">
+               {required ? 'Attach Your CV / Resume (Required)' : 'Attach Your CV / Resume'}
+             </div>
+             <div className="cv-upload-sub">Click to browse or drag & drop your file here</div>
+             <div className="cv-upload-types">Accepted: PDF, DOC, DOCX · Max 5MB</div>
+             {!required && <div className="cv-upload-note">Optional — skip if not applicable</div>}
+           </>
+         )}
+       </div>
+     );
+   }
    
    /* ══════════════════════════════════════════════════
       ADMIN PANEL
@@ -290,7 +412,7 @@
      const [authed,     setAuthed]     = useState(false);
      const [password,   setPassword]   = useState('');
      const [loginErr,   setLoginErr]   = useState('');
-     const [adminTab,   setAdminTab]   = useState('enquiries'); // 'enquiries' | 'emails' | 'list' | 'add' | 'edit'
+     const [adminTab,   setAdminTab]   = useState('enquiries');
      const [editJob,    setEditJob]    = useState(null);
      const [notice,     setNotice]     = useState('');
      const [noticeErr,  setNoticeErr]  = useState(false);
@@ -298,8 +420,8 @@
      const [expanded,   setExpanded]   = useState(null);
      const [search,     setSearch]     = useState('');
      const [emailSearch,setEmailSearch]= useState('');
-     const [copied,     setCopied]     = useState('');    // 'employer' | 'hr' | 'all' | ''
-     const [emailFilter,setEmailFilter]= useState('all'); // 'all' | 'employer' | 'hr'
+     const [copied,     setCopied]     = useState('');
+     const [emailFilter,setEmailFilter]= useState('all');
    
      const blankForm = { icon:'💼', badge:'full-time', title:'', location:'', industry:'', salary:'', description:'' };
      const [form, setForm] = useState(blankForm);
@@ -309,7 +431,6 @@
        setTimeout(() => setNotice(''), 3500);
      };
    
-     /* ── Enquiry helpers ── */
      const markRead = id => {
        const updated = enquiries.map(e => e.id === id ? { ...e, read: true } : e);
        setEnquiries(updated); saveEnquiries(updated);
@@ -345,7 +466,6 @@
               (e.subject||'').toLowerCase().includes(q);
      });
    
-     /* ── Email list helpers ── */
      const employerEmails = [...new Set(
        enquiries.filter(e => e.role === 'Employer / Hiring Manager').map(e => e.email).filter(Boolean)
      )];
@@ -402,7 +522,6 @@
        showNotice('CSV downloaded successfully!');
      };
    
-     /* ── Job helpers ── */
      const toggleJob = id => { const u = jobs.map(j => j.id===id?{...j,active:!j.active}:j); setJobs(u); saveJobs(u); showNotice('Job visibility updated.'); };
      const deleteJob = id => { if(!window.confirm('Delete this job posting?')) return; const u=jobs.filter(j=>j.id!==id); setJobs(u); saveJobs(u); showNotice('Job deleted.'); };
      const openEdit  = job => { setEditJob(job.id); setForm({icon:job.icon,badge:job.badge,title:job.title,location:job.location,industry:job.industry,salary:job.salary,description:job.description||''}); setAdminTab('edit'); };
@@ -418,7 +537,6 @@
    
      const activeCount = jobs.filter(j => j.active).length;
    
-     /* ── LOGIN SCREEN ── */
      if (!authed) return (
        <div className="admin-overlay" onClick={e => e.target===e.currentTarget && onClose()}>
          <div className="admin-panel">
@@ -443,14 +561,11 @@
        </div>
      );
    
-     /* ── MAIN ADMIN PANEL ── */
      const displayEmails = getDisplayEmails();
    
      return (
        <div className="admin-overlay" onClick={e => e.target===e.currentTarget && onClose()}>
          <div className="admin-panel">
-   
-           {/* Header */}
            <div className="admin-header">
              <div>
                <h2>⚙️ Admin Panel</h2>
@@ -458,13 +573,8 @@
              </div>
              <button className="admin-close-btn" onClick={onClose}>✕</button>
            </div>
-   
            <div className="admin-body">
-   
-             {/* Notice */}
              {notice && <div className={`admin-notice${noticeErr?' error':''}`}>{noticeErr?'⚠️':'✅'} {notice}</div>}
-   
-             {/* Stats row */}
              <div className="admin-stats">
                <div className="admin-stat-card">
                  <strong>{enquiries.filter(e=>e.role==='Employer / Hiring Manager').length}</strong>
@@ -480,15 +590,13 @@
                </div>
                <div className="admin-stat-card"><strong>{activeCount}</strong><span>Active Jobs</span></div>
              </div>
-   
-             {/* Tabs */}
              <div className="admin-tabs">
                <button className={`admin-tab${adminTab==='enquiries'?' active':''}`} onClick={() => setAdminTab('enquiries')}>
                  📬 All Enquiries {unreadCount > 0 && <span className="enq-badge">{unreadCount}</span>}
                </button>
                <button className={`admin-tab${adminTab==='emails'?' active':''}`} onClick={() => setAdminTab('emails')}>
                  📧 Email Lists
-                 {allEmails.length > 0 && <span className="enq-badge" style={{background:'var(--gold)',color:'var(--dark)'}}>{allEmails.length}</span>}
+                 {allEmails.length > 0 && <span className="enq-badge" style={{background:'var(--gold)',color:'var(--navy)'}}>{allEmails.length}</span>}
                </button>
                <button className={`admin-tab${adminTab==='list'?' active':''}`} onClick={() => setAdminTab('list')}>📋 Job Listings</button>
                <button className={`admin-tab${adminTab==='add'||adminTab==='edit'?' active':''}`} onClick={openAdd}>
@@ -496,12 +604,9 @@
                </button>
              </div>
    
-             {/* ════════════════════════════════════
-                 TAB: ALL ENQUIRIES
-                 ════════════════════════════════════ */}
+             {/* ALL ENQUIRIES TAB */}
              {adminTab === 'enquiries' && (
                <div className="enq-panel">
-                 {/* Search + clear */}
                  <div className="enq-toolbar">
                    <div className="enq-search-wrap">
                      <span className="enq-search-icon">🔍</span>
@@ -518,8 +623,6 @@
                      <button className="enq-clear-all" onClick={clearAllEnquiries}>🗑️ Clear All</button>
                    )}
                  </div>
-   
-                 {/* Empty state */}
                  {filteredEnquiries.length === 0 && (
                    <div className="enq-empty">
                      <div className="enq-empty-icon">{search ? '🔍' : '📭'}</div>
@@ -527,13 +630,9 @@
                      <span>{search ? 'Try a different search term.' : 'When employers or HR professionals fill the contact form, their details will appear here.'}</span>
                    </div>
                  )}
-   
-                 {/* Enquiry cards */}
                  <div className="enq-list">
                    {filteredEnquiries.map(enq => (
                      <div key={enq.id} className={`enq-card${!enq.read?' enq-unread':''}${expanded===enq.id?' enq-expanded':''}`}>
-   
-                       {/* Card header */}
                        <div className="enq-card-header" onClick={() => toggleExpand(enq.id)}>
                          <div className="enq-avatar">
                            {enq.firstName?.[0]?.toUpperCase()}{enq.lastName?.[0]?.toUpperCase()}
@@ -556,8 +655,6 @@
                          </div>
                          <div className="enq-chevron">{expanded===enq.id ? '▲' : '▼'}</div>
                        </div>
-   
-                       {/* Expanded detail */}
                        {expanded === enq.id && (
                          <div className="enq-card-body">
                            <div className="enq-detail-grid">
@@ -583,6 +680,12 @@
                                <div className="enq-detail-row">
                                  <span className="enq-detail-label">Role</span>
                                  <span className="enq-detail-value">{enq.role}</span>
+                               </div>
+                             )}
+                             {enq.cvFileName && (
+                               <div className="enq-detail-row">
+                                 <span className="enq-detail-label">CV Attached</span>
+                                 <span className="enq-detail-value">📄 {enq.cvFileName} ({enq.cvFileSize})</span>
                                </div>
                              )}
                              <div className="enq-detail-row">
@@ -617,13 +720,9 @@
                </div>
              )}
    
-             {/* ════════════════════════════════════
-                 TAB: EMAIL LISTS (Admin-only)
-                 ════════════════════════════════════ */}
+             {/* EMAIL LISTS TAB */}
              {adminTab === 'emails' && (
                <div className="email-lists-panel">
-   
-                 {/* Summary cards */}
                  <div className="email-summary-row">
                    <div className={`email-summary-card${emailFilter==='employer'?' active':''}`} onClick={() => setEmailFilter('employer')}>
                      <span className="email-summary-icon">🏢</span>
@@ -641,8 +740,6 @@
                      <span>All Combined</span>
                    </div>
                  </div>
-   
-                 {/* Search within emails */}
                  <div className="enq-search-wrap" style={{marginBottom:'14px'}}>
                    <span className="enq-search-icon">🔍</span>
                    <input
@@ -655,7 +752,6 @@
                    {emailSearch && <button className="enq-search-clear" onClick={() => setEmailSearch('')}>✕</button>}
                  </div>
    
-                 {/* Employer section */}
                  {(emailFilter === 'employer' || emailFilter === 'all') && (
                    <div className="email-group">
                      <div className="email-group-header">
@@ -666,18 +762,9 @@
                        </div>
                        {employerEmails.length > 0 && (
                          <div className="email-group-actions">
-                           <button className="btn-email-action copy" onClick={() => copyEmails('employer')}>
-                             {copied==='employer' ? '✅ Copied!' : '📋 Copy'}
-                           </button>
-                           <button className="btn-email-action download" onClick={() => downloadCSV('employer')}>
-                             ⬇️ CSV
-                           </button>
-                           <a
-                             href={`mailto:?bcc=${employerEmails.join(',')}&subject=Update from JVG Recruitment Solutions`}
-                             className="btn-email-action mailto"
-                           >
-                             ✉️ Email All
-                           </a>
+                           <button className="btn-email-action copy" onClick={() => copyEmails('employer')}>{copied==='employer' ? '✅ Copied!' : '📋 Copy'}</button>
+                           <button className="btn-email-action download" onClick={() => downloadCSV('employer')}>⬇️ CSV</button>
+                           <a href={`mailto:?bcc=${employerEmails.join(',')}&subject=Update from JVG Recruitment Solutions`} className="btn-email-action mailto">✉️ Email All</a>
                          </div>
                        )}
                      </div>
@@ -685,20 +772,11 @@
                        <div className="email-empty">📭 No employer emails collected yet.</div>
                      ) : (
                        <div className="email-chip-list">
-                         {(emailSearch
-                           ? employerEmails.filter(em => em.toLowerCase().includes(emailSearch.toLowerCase()))
-                           : employerEmails
-                         ).map(em => (
+                         {(emailSearch ? employerEmails.filter(em => em.toLowerCase().includes(emailSearch.toLowerCase())) : employerEmails).map(em => (
                            <div key={em} className="email-chip employer-chip">
                              <span className="email-chip-dot" />
                              {em}
-                             <button
-                               className="email-chip-copy"
-                               title="Copy this email"
-                               onClick={() => { navigator.clipboard.writeText(em).catch(()=>{}); showNotice(`Copied: ${em}`); }}
-                             >
-                               📋
-                             </button>
+                             <button className="email-chip-copy" title="Copy this email" onClick={() => { navigator.clipboard.writeText(em).catch(()=>{}); showNotice(`Copied: ${em}`); }}>📋</button>
                            </div>
                          ))}
                        </div>
@@ -706,7 +784,6 @@
                    </div>
                  )}
    
-                 {/* HR section */}
                  {(emailFilter === 'hr' || emailFilter === 'all') && (
                    <div className="email-group" style={{marginTop: emailFilter==='all' ? '20px' : '0'}}>
                      <div className="email-group-header">
@@ -717,18 +794,9 @@
                        </div>
                        {hrEmails.length > 0 && (
                          <div className="email-group-actions">
-                           <button className="btn-email-action copy" onClick={() => copyEmails('hr')}>
-                             {copied==='hr' ? '✅ Copied!' : '📋 Copy'}
-                           </button>
-                           <button className="btn-email-action download" onClick={() => downloadCSV('hr')}>
-                             ⬇️ CSV
-                           </button>
-                           <a
-                             href={`mailto:?bcc=${hrEmails.join(',')}&subject=Update from JVG Recruitment Solutions`}
-                             className="btn-email-action mailto"
-                           >
-                             ✉️ Email All
-                           </a>
+                           <button className="btn-email-action copy" onClick={() => copyEmails('hr')}>{copied==='hr' ? '✅ Copied!' : '📋 Copy'}</button>
+                           <button className="btn-email-action download" onClick={() => downloadCSV('hr')}>⬇️ CSV</button>
+                           <a href={`mailto:?bcc=${hrEmails.join(',')}&subject=Update from JVG Recruitment Solutions`} className="btn-email-action mailto">✉️ Email All</a>
                          </div>
                        )}
                      </div>
@@ -736,20 +804,11 @@
                        <div className="email-empty">📭 No HR professional emails collected yet.</div>
                      ) : (
                        <div className="email-chip-list">
-                         {(emailSearch
-                           ? hrEmails.filter(em => em.toLowerCase().includes(emailSearch.toLowerCase()))
-                           : hrEmails
-                         ).map(em => (
+                         {(emailSearch ? hrEmails.filter(em => em.toLowerCase().includes(emailSearch.toLowerCase())) : hrEmails).map(em => (
                            <div key={em} className="email-chip hr-chip">
                              <span className="email-chip-dot" style={{background:'#A855F7'}} />
                              {em}
-                             <button
-                               className="email-chip-copy"
-                               title="Copy this email"
-                               onClick={() => { navigator.clipboard.writeText(em).catch(()=>{}); showNotice(`Copied: ${em}`); }}
-                             >
-                               📋
-                             </button>
+                             <button className="email-chip-copy" title="Copy this email" onClick={() => { navigator.clipboard.writeText(em).catch(()=>{}); showNotice(`Copied: ${em}`); }}>📋</button>
                            </div>
                          ))}
                        </div>
@@ -757,28 +816,16 @@
                    </div>
                  )}
    
-                 {/* Combined actions when viewing all */}
                  {emailFilter === 'all' && allEmails.length > 0 && (
                    <div className="email-combined-actions">
                      <div className="email-combined-label">⚡ Combined Actions (All {allEmails.length} emails)</div>
                      <div style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
-                       <button className="btn-email-action copy" style={{padding:'10px 18px'}} onClick={() => copyEmails('all')}>
-                         {copied==='all' ? '✅ Copied All!' : '📋 Copy All Emails'}
-                       </button>
-                       <button className="btn-email-action download" style={{padding:'10px 18px'}} onClick={() => downloadCSV('all')}>
-                         ⬇️ Download Full CSV
-                       </button>
-                       <a
-                         href={`mailto:?bcc=${allEmails.join(',')}&subject=Update from JVG Recruitment Solutions`}
-                         className="btn-email-action mailto"
-                         style={{padding:'10px 18px'}}
-                       >
-                         ✉️ Email Everyone
-                       </a>
+                       <button className="btn-email-action copy" style={{padding:'10px 18px'}} onClick={() => copyEmails('all')}>{copied==='all' ? '✅ Copied All!' : '📋 Copy All Emails'}</button>
+                       <button className="btn-email-action download" style={{padding:'10px 18px'}} onClick={() => downloadCSV('all')}>⬇️ Download Full CSV</button>
+                       <a href={`mailto:?bcc=${allEmails.join(',')}&subject=Update from JVG Recruitment Solutions`} className="btn-email-action mailto" style={{padding:'10px 18px'}}>✉️ Email Everyone</a>
                      </div>
                    </div>
                  )}
-   
                  {allEmails.length === 0 && (
                    <div className="enq-empty" style={{marginTop:'20px'}}>
                      <div className="enq-empty-icon">📭</div>
@@ -789,7 +836,7 @@
                </div>
              )}
    
-             {/* ════ JOB LIST TAB ════ */}
+             {/* JOB LIST TAB */}
              {adminTab === 'list' && (
                <>
                  <div className="admin-job-list">
@@ -807,7 +854,7 @@
                        </div>
                        <div className="admin-job-row-actions">
                          <button className={`btn-icon toggle${!job.active?' off':''}`} title={job.active?'Hide':'Show'} onClick={() => toggleJob(job.id)}>{job.active?'👁️':'🙈'}</button>
-                         <button className="btn-icon edit"   title="Edit"   onClick={() => openEdit(job)}>✏️</button>
+                         <button className="btn-icon edit" title="Edit" onClick={() => openEdit(job)}>✏️</button>
                          <button className="btn-icon delete" title="Delete" onClick={() => deleteJob(job.id)}>🗑️</button>
                        </div>
                      </div>
@@ -817,7 +864,7 @@
                </>
              )}
    
-             {/* ════ ADD / EDIT TAB ════ */}
+             {/* ADD / EDIT TAB */}
              {(adminTab==='add'||adminTab==='edit') && (
                <form className="job-form" onSubmit={saveJob}>
                  <h4>{adminTab==='edit'?'✏️ Edit Job Posting':'➕ Add New Job Posting'}</h4>
@@ -867,7 +914,6 @@
                  </div>
                </form>
              )}
-   
            </div>
          </div>
        </div>
@@ -889,7 +935,6 @@
            <h2 className="section-title">Featured <em>Job Openings</em></h2>
            <p className="section-desc">Explore our current vacancies across Nigeria. New roles added regularly — follow us on Facebook for instant job alerts.</p>
          </div>
-   
          <div className="jobs-grid">
            {visible.length === 0 ? (
              <div className="jobs-empty">
@@ -913,7 +958,6 @@
              </div>
            ))}
          </div>
-   
          <div className="jobs-footer" ref={el => ref(el, visible.length+1)}>
            <p>More openings posted daily. Follow us on Facebook for instant alerts.</p>
            <div className="jobs-footer-btns">
@@ -981,45 +1025,127 @@
    }
    
    /* ══════════════════════════════════════════════════
-      CONTACT
+      CONTACT — EMAILJS + CV REQUIRED FOR JOB SEEKERS
       ══════════════════════════════════════════════════ */
+
+   /* EmailJS config */
+   const EMAILJS_SERVICE  = 'service_oai19oi';
+   const EMAILJS_TEMPLATE = 'template_5yoz7uv';
+
+   /* Roles that require a CV attachment */
+   const CV_REQUIRED_ROLES = ['Job Seeker / Candidate'];
+
    function Contact() {
      const ref = useReveal();
-     const [sent, setSent] = useState(false);
-     const [form, setForm] = useState({ firstName:'', lastName:'', email:'', phone:'', role:'', subject:'', message:'' });
-   
+     const [sent,     setSent]     = useState(false);
+     const [sending,  setSending]  = useState(false);
+     const [sendErr,  setSendErr]  = useState('');
+     const [cvFile,   setCvFile]   = useState(null);
+     const [cvErr,    setCvErr]    = useState('');
+     const [form, setForm] = useState({
+       firstName:'', lastName:'', email:'', phone:'', role:'', subject:'', message:''
+     });
+
      const info = [
        { icon:'📧', label:'Email Us',        val:'info@jvgrecruitmentsolutions.com' },
-       { icon:'📞', label:'Call / WhatsApp', val:'+234 704 745 3599 JVG JOBS'            },
+       { icon:'📞', label:'Call / WhatsApp', val:'+234 704 745 3599 JVG JOBS'       },
        { icon:'📍', label:'Location',        val:'Abuja, Federal Capital Territory, Nigeria' },
      ];
-   
-     const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
-   
-     const handleSubmit = e => {
-       e.preventDefault();
-       /* ── Save Employer AND HR Professional submissions ── */
-       if (form.role === 'Employer / Hiring Manager' || form.role === 'HR Professional') {
-         const entry = {
-           id:        Date.now(),
-           timestamp: new Date().toISOString(),
-           firstName: form.firstName,
-           lastName:  form.lastName,
-           email:     form.email,
-           phone:     form.phone,
-           role:      form.role,           // ← role stored so admin can separate them
-           subject:   form.subject,
-           message:   form.message,
-           read:      false,
-         };
-         const updated = [entry, ...loadEnquiries()];
-         saveEnquiries(updated);
-       }
-       setSent(true);
-       setForm({ firstName:'', lastName:'', email:'', phone:'', role:'', subject:'', message:'' });
-       setTimeout(() => setSent(false), 4500);
+
+     const formatSize = (bytes) => {
+       if (bytes < 1024) return `${bytes} B`;
+       if (bytes < 1024 * 1024) return `${(bytes/1024).toFixed(1)} KB`;
+       return `${(bytes/(1024*1024)).toFixed(1)} MB`;
      };
-   
+
+     /* Convert file to base64 for EmailJS attachment */
+     const toBase64 = (file) => new Promise((resolve, reject) => {
+       const reader = new FileReader();
+       reader.onload  = () => resolve(reader.result.split(',')[1]);
+       reader.onerror = reject;
+       reader.readAsDataURL(file);
+     });
+
+     const isCvRequired = CV_REQUIRED_ROLES.includes(form.role);
+
+     const handleChange = e => {
+       setForm({ ...form, [e.target.name]: e.target.value });
+       /* Clear CV error when role changes away from required */
+       if (e.target.name === 'role') setCvErr('');
+     };
+
+     const handleSubmit = async (e) => {
+       e.preventDefault();
+       setSendErr('');
+       setCvErr('');
+
+       /* Validate CV required for job seekers */
+       if (isCvRequired && !cvFile) {
+         setCvErr('Please attach your CV / Resume to continue.');
+         document.querySelector('.cv-upload-zone')?.scrollIntoView({ behavior:'smooth', block:'center' });
+         return;
+       }
+
+       setSending(true);
+
+       try {
+         /* Build base64 attachment if CV present */
+         let attachmentData  = '';
+         let attachmentName  = '';
+         if (cvFile) {
+           attachmentData = await toBase64(cvFile);
+           attachmentName = cvFile.name;
+         }
+
+         /* Template params — map these to your EmailJS template variables */
+         const templateParams = {
+           to_email:        'samsonvictor863@gmail.com',
+           from_name:       `${form.firstName} ${form.lastName}`,
+           from_email:      form.email,
+           phone:           form.phone || 'Not provided',
+           role:            form.role,
+           subject:         form.subject,
+           message:         form.message,
+           cv_filename:     attachmentName || 'No CV attached',
+           /* EmailJS supports file attachments via content + name fields */
+           attachment_name: attachmentName,
+           attachment:      attachmentData,
+         };
+
+         await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, templateParams);
+
+         /* Save to local admin panel for Employer / HR roles */
+         if (form.role === 'Employer / Hiring Manager' || form.role === 'HR Professional') {
+           const entry = {
+             id:         Date.now(),
+             timestamp:  new Date().toISOString(),
+             firstName:  form.firstName,
+             lastName:   form.lastName,
+             email:      form.email,
+             phone:      form.phone,
+             role:       form.role,
+             subject:    form.subject,
+             message:    form.message,
+             cvFileName: cvFile ? cvFile.name     : null,
+             cvFileSize: cvFile ? formatSize(cvFile.size) : null,
+             read:       false,
+           };
+           saveEnquiries([entry, ...loadEnquiries()]);
+         }
+
+         setSent(true);
+         setForm({ firstName:'', lastName:'', email:'', phone:'', role:'', subject:'', message:'' });
+         setCvFile(null);
+         setTimeout(() => setSent(false), 6000);
+
+       } catch (err) {
+         console.error('EmailJS error:', err);
+         setSendErr('Something went wrong sending your message. Please try again or email us directly at info@jvgrecruitmentsolutions.com');
+       } finally {
+         setSending(false);
+       }
+     };
+
      return (
        <section className="contact-section" id="contact">
          <div className="contact-grid">
@@ -1044,16 +1170,41 @@
                </a>
              </div>
            </div>
+
            <div className="contact-form reveal reveal-d1" ref={el => ref(el,3)}>
              <div className="form-title">Send Us a Message</div>
              <p className="form-sub">For job postings, CV submissions, or general enquiries — fill in the form below.</p>
+
+             {/* Global send error */}
+             {sendErr && (
+               <div style={{
+                 background:'#FEE2E2', color:'#DC2626', border:'1.5px solid rgba(220,38,38,.2)',
+                 borderRadius:'10px', padding:'13px 16px', fontSize:'14px',
+                 fontWeight:'500', marginBottom:'18px', lineHeight:'1.5'
+               }}>
+                 ⚠️ {sendErr}
+               </div>
+             )}
+
              <form onSubmit={handleSubmit}>
                <div className="form-row">
-                 <div className="form-group"><label>First Name</label><input type="text" name="firstName" placeholder="e.g. Chioma" value={form.firstName} onChange={handleChange} required /></div>
-                 <div className="form-group"><label>Last Name</label><input type="text" name="lastName" placeholder="e.g. Obi" value={form.lastName} onChange={handleChange} required /></div>
+                 <div className="form-group">
+                   <label>First Name</label>
+                   <input type="text" name="firstName" placeholder="e.g. Chioma" value={form.firstName} onChange={handleChange} required />
+                 </div>
+                 <div className="form-group">
+                   <label>Last Name</label>
+                   <input type="text" name="lastName" placeholder="e.g. Obi" value={form.lastName} onChange={handleChange} required />
+                 </div>
                </div>
-               <div className="form-group"><label>Email Address</label><input type="email" name="email" placeholder="you@example.com" value={form.email} onChange={handleChange} required /></div>
-               <div className="form-group"><label>Phone Number</label><input type="tel" name="phone" placeholder="+234 XXX XXX XXXX" value={form.phone} onChange={handleChange} /></div>
+               <div className="form-group">
+                 <label>Email Address</label>
+                 <input type="email" name="email" placeholder="you@example.com" value={form.email} onChange={handleChange} required />
+               </div>
+               <div className="form-group">
+                 <label>Phone Number</label>
+                 <input type="tel" name="phone" placeholder="+234 XXX XXX XXXX" value={form.phone} onChange={handleChange} />
+               </div>
                <div className="form-group">
                  <label>I am a...</label>
                  <select name="role" value={form.role} onChange={handleChange} required>
@@ -1064,10 +1215,54 @@
                    <option>Other</option>
                  </select>
                </div>
-               <div className="form-group"><label>Subject</label><input type="text" name="subject" placeholder="e.g. Job Posting, CV Submission" value={form.subject} onChange={handleChange} required /></div>
-               <div className="form-group"><label>Message</label><textarea name="message" placeholder="Tell us what you're looking for..." value={form.message} onChange={handleChange} required /></div>
-               <button type="submit" className={`form-submit${sent?' success':''}`} disabled={sent}>
-                 {sent ? "✅ Message Sent! We'll be in touch shortly." : '📩 Send Message'}
+               <div className="form-group">
+                 <label>Subject</label>
+                 <input type="text" name="subject" placeholder="e.g. Job Posting, CV Submission" value={form.subject} onChange={handleChange} required />
+               </div>
+               <div className="form-group">
+                 <label>Message</label>
+                 <textarea name="message" placeholder="Tell us what you're looking for..." value={form.message} onChange={handleChange} required />
+               </div>
+
+               {/* ── CV UPLOAD ── shown always, required only for job seekers ── */}
+               <div className="form-group">
+                 <label>
+                   Attach CV / Resume
+                   {isCvRequired
+                     ? <span style={{color:'var(--red)',marginLeft:'4px',fontWeight:'800'}}>*</span>
+                     : <span style={{color:'var(--grey-mid)',marginLeft:'6px',fontWeight:'400',fontSize:'11px',textTransform:'none',letterSpacing:0}}>(optional)</span>
+                   }
+                 </label>
+                 <CvUpload cvFile={cvFile} setCvFile={file => { setCvFile(file); if(file) setCvErr(''); }} required={isCvRequired} />
+                 {cvErr && (
+                   <div style={{
+                     color:'var(--red)', fontSize:'12px', fontWeight:'600',
+                     marginTop:'6px', display:'flex', alignItems:'center', gap:'5px'
+                   }}>
+                     ⚠️ {cvErr}
+                   </div>
+                 )}
+                 {isCvRequired && !cvFile && (
+                   <div style={{
+                     fontSize:'11px', color:'var(--grey-mid)', marginTop:'5px',
+                     fontStyle:'italic'
+                   }}>
+                     A CV is required for Job Seeker / Candidate applications.
+                   </div>
+                 )}
+               </div>
+
+               <button
+                 type="submit"
+                 className={`form-submit${sent?' success':''}${sending?' sending':''}`}
+                 disabled={sent || sending}
+               >
+                 {sent
+                   ? "✅ Message Sent! We'll be in touch shortly."
+                   : sending
+                     ? '⏳ Sending...'
+                     : '📩 Send Message'
+                 }
                </button>
              </form>
            </div>
@@ -1112,10 +1307,7 @@
    }
    
    /* ══════════════════════════════════════════════════
-      HIDDEN ADMIN ACCESS — three invisible entry points:
-      1. URL hash:   yoursite.html#jvg-admin
-      2. Key combo:  type "jvgadmin" anywhere on the page
-      3. Secret tap: click the "©" symbol in footer 5×
+      HIDDEN ADMIN ACCESS
       ══════════════════════════════════════════════════ */
    const SECRET_SEQUENCE = 'jvgadmin';
    
@@ -1191,4 +1383,3 @@
    
    const root = ReactDOM.createRoot(document.getElementById('root'));
    root.render(<App />);
-   
