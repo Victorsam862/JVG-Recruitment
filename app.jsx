@@ -152,27 +152,19 @@
      return (
        <section className="hero" id="home">
          <div className="hero-bg">
-           {/* Animated glowing orbs */}
            <div className="hero-orb hero-orb-1" />
            <div className="hero-orb hero-orb-2" />
            <div className="hero-orb hero-orb-3" />
-           {/* Geometric rings */}
            <div className="hc hc1" />
            <div className="hc hc2" />
            <div className="hc hc3" />
-           {/* Dot grid */}
            <div className="hdots" />
-           {/* Light beams */}
            <div className="hero-beam" />
            <div className="hero-beam-2" />
-           {/* Scanline depth effect */}
            <div className="hero-scanline" />
-           {/* Star field */}
            <StarField />
-           {/* Center radial glow */}
            <div className="hero-glow" />
          </div>
-         {/* Bottom edge glow line */}
          <div className="hero-bottom-glow" />
    
          <div className="hero-content">
@@ -1028,11 +1020,8 @@
       CONTACT — EMAILJS + CV REQUIRED FOR JOB SEEKERS
       ══════════════════════════════════════════════════ */
 
-   /* EmailJS config */
    const EMAILJS_SERVICE  = 'service_oai19oi';
    const EMAILJS_TEMPLATE = 'template_5yoz7uv';
-
-   /* Roles that require a CV attachment */
    const CV_REQUIRED_ROLES = ['Job Seeker / Candidate'];
 
    function Contact() {
@@ -1058,7 +1047,6 @@
        return `${(bytes/(1024*1024)).toFixed(1)} MB`;
      };
 
-     /* Convert file to base64 for EmailJS attachment */
      const toBase64 = (file) => new Promise((resolve, reject) => {
        const reader = new FileReader();
        reader.onload  = () => resolve(reader.result.split(',')[1]);
@@ -1070,7 +1058,6 @@
 
      const handleChange = e => {
        setForm({ ...form, [e.target.name]: e.target.value });
-       /* Clear CV error when role changes away from required */
        if (e.target.name === 'role') setCvErr('');
      };
 
@@ -1079,7 +1066,6 @@
        setSendErr('');
        setCvErr('');
 
-       /* Validate CV required for job seekers */
        if (isCvRequired && !cvFile) {
          setCvErr('Please attach your CV / Resume to continue.');
          document.querySelector('.cv-upload-zone')?.scrollIntoView({ behavior:'smooth', block:'center' });
@@ -1089,7 +1075,6 @@
        setSending(true);
 
        try {
-         /* Build base64 attachment if CV present */
          let attachmentData  = '';
          let attachmentName  = '';
          if (cvFile) {
@@ -1097,7 +1082,6 @@
            attachmentName = cvFile.name;
          }
 
-         /* Template params — map these to your EmailJS template variables */
          const templateParams = {
            to_email:        'samsonvictor863@gmail.com',
            from_name:       `${form.firstName} ${form.lastName}`,
@@ -1107,14 +1091,12 @@
            subject:         form.subject,
            message:         form.message,
            cv_filename:     attachmentName || 'No CV attached',
-           /* EmailJS supports file attachments via content + name fields */
            attachment_name: attachmentName,
            attachment:      attachmentData,
          };
 
          await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, templateParams);
 
-         /* Save to local admin panel for Employer / HR roles */
          if (form.role === 'Employer / Hiring Manager' || form.role === 'HR Professional') {
            const entry = {
              id:         Date.now(),
@@ -1175,7 +1157,6 @@
              <div className="form-title">Send Us a Message</div>
              <p className="form-sub">For job postings, CV submissions, or general enquiries — fill in the form below.</p>
 
-             {/* Global send error */}
              {sendErr && (
                <div style={{
                  background:'#FEE2E2', color:'#DC2626', border:'1.5px solid rgba(220,38,38,.2)',
@@ -1224,7 +1205,6 @@
                  <textarea name="message" placeholder="Tell us what you're looking for..." value={form.message} onChange={handleChange} required />
                </div>
 
-               {/* ── CV UPLOAD ── shown always, required only for job seekers ── */}
                <div className="form-group">
                  <label>
                    Attach CV / Resume
