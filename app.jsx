@@ -6,7 +6,7 @@
    const { useState, useEffect, useRef, useCallback } = React;
 
    /* ─── ADMIN CREDENTIALS (change these) ─── */
-   const ADMIN_PASSWORD = 'jvg@admin2025';
+   const ADMIN_PASSWORD = 'jvgadmin';
    
    /* ─── DEFAULT JOB DATA ─── */
    const DEFAULT_JOBS = [
@@ -174,7 +174,7 @@
            </h1>
            <p className="hero-sub">
              Match your business with top talent — quickly, efficiently and reliably.
-             We help employers build winning teams and support job seekers in securing meaningful careers across Abuja, Lagos and all Nigerian states.
+             We help employers build winning teams and support job seekers in securing meaningful careers across Abuja, Lagos and all states in Nigeria.
            </p>
            <div className="hero-btns">
              <a href="#contact" className="btn-primary">📋 Post a Job</a>
@@ -1020,8 +1020,14 @@
       CONTACT — EMAILJS + CV REQUIRED FOR JOB SEEKERS
       ══════════════════════════════════════════════════ */
 
+   /* ─── EmailJS — Account 1 (samsonvictor863@gmail.com) ─── */
    const EMAILJS_SERVICE  = 'service_oai19oi';
    const EMAILJS_TEMPLATE = 'template_5yoz7uv';
+   /* ─── EmailJS — Account 2 (jvgbizsolutionshr@gmail.com) ─── */
+   const EMAILJS_SERVICE_2  = 'service_thy1736';
+   const EMAILJS_TEMPLATE_2 = 'template_b05p02z';
+   const EMAILJS_PUBLIC_KEY_2 = 'd26MprEm9Q41eC6-g';
+
    const CV_REQUIRED_ROLES = ['Job Seeker / Candidate'];
 
    function Contact() {
@@ -1083,7 +1089,6 @@
          }
 
          const templateParams = {
-           to_email:        'samsonvictor863@gmail.com',
            from_name:       `${form.firstName} ${form.lastName}`,
            from_email:      form.email,
            phone:           form.phone || 'Not provided',
@@ -1095,7 +1100,15 @@
            attachment:      attachmentData,
          };
 
-         await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, templateParams);
+         /* ─── Fire BOTH EmailJS accounts simultaneously ───
+          * Account 1 uses the globally-initialised public key.
+          * Account 2 passes its own public key as the 4th arg.
+          * Promise.all ensures we wait for both before proceeding.
+          * If one fails the catch block still handles the error.  */
+         await Promise.all([
+           emailjs.send(EMAILJS_SERVICE,   EMAILJS_TEMPLATE,   templateParams),
+           emailjs.send(EMAILJS_SERVICE_2, EMAILJS_TEMPLATE_2, templateParams, EMAILJS_PUBLIC_KEY_2),
+         ]);
 
          if (form.role === 'Employer / Hiring Manager' || form.role === 'HR Professional') {
            const entry = {

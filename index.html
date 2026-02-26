@@ -18,6 +18,24 @@
     <!-- EmailJS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script>
+      /*
+       * TWO EmailJS accounts fire on every form submission so
+       * both inboxes receive every enquiry simultaneously.
+       *
+       * Account 1 — samsonvictor863@gmail.com
+       *   Public Key : H_xGDByxw8GyI06yX
+       *   Service ID : service_oai19oi
+       *   Template ID: template_5yoz7uv
+       *
+       * Account 2 — jvgbizsolutionshr@gmail.com
+       *   Public Key : d26MprEm9Q41eC6-g
+       *   Service ID : service_thy1736
+       *   Template ID: template_qpmjlnd
+       *
+       * Account 1 is initialised here globally. Account 2 is
+       * called in app.jsx via emailjs.send() with its public
+       * key passed as the 4th argument (no second init needed).
+       */
       (function(){ emailjs.init({ publicKey: 'H_xGDByxw8GyI06yX' }); })();
     </script>
 
