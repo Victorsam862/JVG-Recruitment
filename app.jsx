@@ -38,29 +38,34 @@ const FIREBASE_CONFIG = {
 };
 
 // ── FIREBASE SDK (loaded from CDN in index.html) ─────────────
-// We use the Firebase compat SDK loaded via script tags.
-// All Firebase calls are wrapped so the app still works even if
-// Firebase hasn't initialised yet (graceful fallback to nothing).
+// Lazy getter — initialises Firebase the FIRST time getDb() is
+// called. This guarantees the compat SDK scripts are fully loaded
+// before we touch the firebase global, regardless of how fast
+// Babel compiles app.jsx.
 
-let db = null;
+let _db = null;
 
-function initFirebase() {
+function getDb() {
+  if (_db) return _db;
   try {
-    if (typeof firebase === 'undefined') return;
-    if (!firebase.apps.length) {
+    if (typeof firebase === 'undefined') {
+      console.warn('Firebase SDK not available');
+      return null;
+    }
+    if (!firebase.apps || !firebase.apps.length) {
       firebase.initializeApp(FIREBASE_CONFIG);
     }
-    db = firebase.firestore();
+    _db = firebase.firestore();
+    return _db;
   } catch (e) {
-    console.warn('Firebase init failed:', e.message);
+    console.warn('Firebase init error:', e.message);
+    return null;
   }
 }
 
-// Call init immediately
-initFirebase();
-
 // ── FIRESTORE HELPERS ─────────────────────────────────────────
 async function fbGetJobs() {
+  const db = getDb();
   if (!db) return [];
   try {
     const snap = await db.collection('jobs').orderBy('createdAt', 'desc').get();
@@ -72,7 +77,8 @@ async function fbGetJobs() {
 }
 
 async function fbSaveJob(jobData) {
-  if (!db) throw new Error('Firebase not initialised');
+  const db = getDb();
+  if (!db) throw new Error('Firebase not initialised — check your config in app.jsx and that the Firebase SDK scripts are loading in index.html');
   const ref = await db.collection('jobs').add({
     ...jobData,
     adminSecret: ADMIN_PASSWORD,
@@ -82,7 +88,8 @@ async function fbSaveJob(jobData) {
 }
 
 async function fbUpdateJob(id, jobData) {
-  if (!db) throw new Error('Firebase not initialised');
+  const db = getDb();
+  if (!db) throw new Error('Firebase not initialised — check your config in app.jsx and that the Firebase SDK scripts are loading in index.html');
   await db.collection('jobs').doc(id).update({
     ...jobData,
     adminSecret: ADMIN_PASSWORD
@@ -90,12 +97,14 @@ async function fbUpdateJob(id, jobData) {
 }
 
 async function fbDeleteJob(id) {
-  if (!db) throw new Error('Firebase not initialised');
+  const db = getDb();
+  if (!db) throw new Error('Firebase not initialised — check your config in app.jsx and that the Firebase SDK scripts are loading in index.html');
   await db.collection('jobs').doc(id).delete();
 }
 
 function fbSubscribeJobs(callback) {
-  if (!db) return () => {};
+  const db = getDb();
+  if (!db) { setTimeout(() => callback([]), 100); return () => {}; }
   try {
     return db.collection('jobs')
       .orderBy('createdAt', 'desc')

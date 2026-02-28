@@ -10,13 +10,38 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
+
+    <!-- 1. EmailJS -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+    <!-- 2. Firebase compat SDK — MUST load before app.jsx -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <!-- 3. React -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+    <!-- 4. Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="text/babel" src="app.jsx"></script>
+
+    <!--
+      5. Load app.jsx via fetch so Firebase is 100% ready first.
+         type="text/babel" with src= is async and unreliable.
+         This fetch approach is synchronous-after-load and guaranteed.
+    -->
+    <script>
+      fetch('app.jsx')
+        .then(function(r){ return r.text(); })
+        .then(function(src){
+          var compiled = Babel.transform(src, { presets: ['react'], filename: 'app.jsx' }).code;
+          // Use indirect eval so it runs in global scope (React, firebase, etc. are all accessible)
+          (0, eval)(compiled);
+        })
+        .catch(function(e){ console.error('Failed to load app.jsx:', e); });
+    </script>
   </body>
 </html>
