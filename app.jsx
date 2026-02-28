@@ -135,9 +135,9 @@ const TESTIMONIALS = [
   { name:'Tunde Adesanya', role:'GM, Broll Nigeria', initials:'TA', stars:5, text:'Their executive search practice is world-class. Discreet, thorough, and they found our new COO in 6 weeks. Remarkable.' },
 ];
 const LEADERSHIP = [
-  { name:'Head of Recruitment', role:'Head of Recruitment', photo:'hr.jpeg', bio:"A seasoned recruitment professional with deep expertise in talent acquisition across Nigeria's most competitive sectors. She leads our consultant team with precision, passion, and an unmatched eye for potential." },
-  { name:'Founder & CEO', role:'Founder & CEO', photo:'Founder.jpeg', bio:'The visionary behind JVG Recruitment Solutions. With over a decade of HR leadership experience across banking, hospitality, and FMCG, she founded JVG with one mission — to raise the standard of recruitment in Nigeria.' },
-  { name:'Victor Samson', role:'Client Relations Director', photo:'passport.jpeg', bio:'The bridge between our clients and our consultants. He ensures every employer partnership is built on trust, transparency and results.' },
+  { name:'Patience .I. Akhanemhe', role:'HEAD OF RECRUITMENT', photo:'hr.jpeg', bio:"A seasoned recruitment professional with deep expertise in talent acquisition across Nigeria's most competitive sectors. She leads our consultant team with precision, passion, and an unmatched eye for potential." },
+  { name:'Ruth .O. Ndukwe', role:'FOUNDER & CEO', photo:'Founder.jpeg', bio:'The visionary behind JVG Recruitment Solutions. With over a decade of HR leadership experience across banking, hospitality, and FMCG, she founded JVG with one mission — to raise the standard of recruitment in Nigeria.' },
+  { name:'Victor Samson', role:'CLIENT RELATIONS DIRECTOR', photo:'passport.jpeg', bio:'The bridge between our clients and our consultants. He ensures every employer partnership is built on trust, transparency, and results.' },
 ];
 const INDUSTRY_ICONS = {
   'Hospitality':'🏨','Finance':'💰','HR':'👥','Oil & Gas':'⛽',
@@ -948,6 +948,7 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
 
   const emptyJob = { title:'', type:'Permanent', location:'', industry:'', salaryAmount:'', excerpt:'', description:'' };
   const [jobForm, setJobForm] = useState(emptyJob);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const allJobs = [...customJobs, ...SAMPLE_JOBS.filter(j=>!new Set(customJobs.map(c=>c.id)).has(j.id))];
   const filteredAdminJobs = jobSearch.trim() ? allJobs.filter(j=>j.title.toLowerCase().includes(jobSearch.toLowerCase())||j.location.toLowerCase().includes(jobSearch.toLowerCase())||j.industry.toLowerCase().includes(jobSearch.toLowerCase())) : allJobs;
@@ -1018,14 +1019,17 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
 
   return (
     <div className="admin-shell">
-      <aside className="admin-sidebar">
+      {/* Backdrop overlay */}
+      <div className={"admin-sidebar-overlay"+(sidebarOpen?" visible":"")} onClick={()=>setSidebarOpen(false)}/>
+
+      <aside className={"admin-sidebar"+(sidebarOpen?" open":"")}>
         <div className="admin-sidebar__brand">
           <div className="navbar__logo-mark" style={{width:36,height:36,fontSize:'0.9rem'}}>JVG</div>
           <span>Admin Panel</span>
         </div>
         <nav className="admin-sidebar__nav">
           {navItems.map(item=>(
-            <button key={item.id} className={`admin-nav-item${activeSection===item.id?' active':''}`} onClick={()=>setActiveSection(item.id)}>
+            <button key={item.id} className={"admin-nav-item"+(activeSection===item.id?" active":"")} onClick={()=>{setActiveSection(item.id);setSidebarOpen(false);}}>
               <span className="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
               {item.badge ? <span className="admin-nav-badge">{item.badge}</span> : null}
@@ -1039,7 +1043,8 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
 
       <main className="admin-main">
         <header className="admin-topbar">
-          <div>
+          <button className="admin-menu-btn" onClick={()=>setSidebarOpen(true)} aria-label="Open sidebar">☰</button>
+          <div style={{flex:1}}>
             <p className="eyebrow" style={{marginBottom:'0.2rem'}}>JVG Recruitment Solutions</p>
             <h1 className="admin-topbar__title">
               {activeSection==='dashboard' && 'Dashboard'}
@@ -1070,7 +1075,7 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
                   <AdminStatCard key={i} icon={s.icon} label={s.label} value={s.value} colour={s.colour} delay={i*0.1}/>
                 ))}
               </div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1.5rem'}}>
+              <div className="admin-dashboard-grid">
                 <div className="admin-panel-card">
                   <div className="admin-panel-card__header">
                     <span className="admin-panel-card__title">Recent Enquiries</span>
@@ -1079,7 +1084,7 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
                   {enquiries.length===0?(
                     <div className="empty-state" style={{padding:'2rem'}}><div className="empty-state__icon">📭</div><p style={{fontFamily:'var(--font-body)',fontSize:'0.85rem',color:'var(--text-muted)'}}>No enquiries yet. They'll appear here when the contact form is submitted.</p></div>
                   ):(
-                    <table className="admin-table"><thead><tr><th>Name</th><th>Type</th><th>Company / Role</th><th>Status</th></tr></thead>
+                    <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Name</th><th>Type</th><th>Company / Role</th><th>Status</th></tr></thead>
                       <tbody>{enquiries.slice(0,6).map(e=>(
                         <tr key={e.id} style={{cursor:'pointer'}} onClick={()=>{setViewEnquiry(e);if(!e.read)markRead(e.id);}}>
                           <td style={{fontWeight:e.read?400:700}}>{e.name}</td>
@@ -1088,7 +1093,7 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
                           <td><span className={`badge ${e.read?'badge--read':'badge--new'}`}>{e.read?'Read':'New'}</span></td>
                         </tr>
                       ))}</tbody>
-                    </table>
+                    </table></div>
                   )}
                 </div>
                 <div className="admin-panel-card">
@@ -1096,9 +1101,9 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
                     <span className="admin-panel-card__title">Active Job Listings</span>
                     <button className="btn btn--ghost btn--sm" onClick={()=>setActiveSection('jobs')}>Manage</button>
                   </div>
-                  <table className="admin-table"><thead><tr><th>Title</th><th>Location</th><th>Type</th></tr></thead>
+                  <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Title</th><th>Location</th><th>Type</th></tr></thead>
                     <tbody>{allJobs.slice(0,6).map(j=><tr key={j.id}><td style={{fontWeight:600,fontSize:'0.82rem'}}>{getJobIcon(j.industry)} {j.title}</td><td style={{fontSize:'0.82rem'}}>{j.location}</td><td><span className="badge badge--active" style={{fontSize:'0.65rem'}}>{j.type}</span></td></tr>)}</tbody>
-                  </table>
+                  </table></div>
                 </div>
               </div>
             </>
@@ -1155,7 +1160,7 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
                 {filteredAdminJobs.length===0?(
                   <div className="empty-state"><div className="empty-state__icon">💼</div><h3 className="empty-state__title">No jobs found</h3></div>
                 ):(
-                  <div style={{overflowX:'auto'}}>
+                  <div className="admin-table-wrap">
                     <table className="admin-table">
                       <thead><tr><th>Title</th><th>Location</th><th>Industry</th><th>Salary</th><th>Type</th><th>Source</th><th>Actions</th></tr></thead>
                       <tbody>{filteredAdminJobs.map(j=>{
@@ -1199,7 +1204,7 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
                 {filteredEnquiries.length===0?(
                   <div className="empty-state"><div className="empty-state__icon">📭</div><h3 className="empty-state__title">No enquiries found</h3><p className="empty-state__text">Enquiries submitted through the contact form will appear here.</p></div>
                 ):(
-                  <div style={{overflowX:'auto'}}>
+                  <div className="admin-table-wrap">
                     <table className="admin-table">
                       <thead><tr><th>Name</th><th>Type</th><th>Email</th><th>Company / Role</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
                       <tbody>{filteredEnquiries.map(e=>(
