@@ -3,6 +3,7 @@
 // Email delivery: EmailJS → info@jvgrecruitmentsolutions.com
 // Admin access: type "jvgadmin" anywhere on page
 // Admin password: jvgadmin862
+// Live jobs database: Firebase Firestore
 // ============================================================
 
 // ── EMAILJS CREDENTIALS ──────────────────────────────────────
@@ -14,14 +15,99 @@ const EMAILJS_TPL_CANDIDATE = 'template_b05p02z';
 // ── ADMIN CREDENTIALS ────────────────────────────────────────
 const ADMIN_PASSWORD = 'jvgadmin862';
 
-const { useState, useEffect, useRef } = React;
+// ================================================================
+//  🔥 FIREBASE CONFIG — REPLACE THESE VALUES WITH YOUR OWN
+//  Steps:
+//  1. Go to https://firebase.google.com → sign in → "Add project"
+//  2. Name it (e.g. jvg-recruitment) → continue through setup
+//  3. Left sidebar → Firestore Database → Create database
+//     → "Start in test mode" → pick a region → Enable
+//  4. Left sidebar → Project Settings (gear icon)
+//     → scroll to "Your apps" → click </> (Web) icon
+//     → register app → copy the firebaseConfig below
+//  5. Replace EVERY value below with your own values
+// ================================================================
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyACl_R12VThr9vvWZPnpAM0lxJ0CK8iS6o",
+  authDomain:        "jvgrecruit.firebaseapp.com",
+  projectId:         "jvgrecruit",
+  storageBucket:     "jvgrecruit.firebasestorage.app",
+  messagingSenderId: "334752750690",
+  appId:             "1:334752750690:web:8a3924644d09349f7ac53b",
+  measurementId:     "G-SL9H98RD4S"
+};
 
-// Initialise EmailJS once (v4 API)
-(function () {
-  if (typeof emailjs !== 'undefined') {
-    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+// ── FIREBASE SDK (loaded from CDN in index.html) ─────────────
+// We use the Firebase compat SDK loaded via script tags.
+// All Firebase calls are wrapped so the app still works even if
+// Firebase hasn't initialised yet (graceful fallback to nothing).
+
+let db = null;
+
+function initFirebase() {
+  try {
+    if (typeof firebase === 'undefined') return;
+    if (!firebase.apps.length) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+    }
+    db = firebase.firestore();
+  } catch (e) {
+    console.warn('Firebase init failed:', e.message);
   }
-})();
+}
+
+// Call init immediately
+initFirebase();
+
+// ── FIRESTORE HELPERS ─────────────────────────────────────────
+async function fbGetJobs() {
+  if (!db) return [];
+  try {
+    const snap = await db.collection('jobs').orderBy('createdAt', 'desc').get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) {
+    console.warn('fbGetJobs error:', e.message);
+    return [];
+  }
+}
+
+async function fbSaveJob(jobData) {
+  if (!db) throw new Error('Firebase not initialised');
+  const ref = await db.collection('jobs').add({
+    ...jobData,
+    adminSecret: ADMIN_PASSWORD,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  return ref.id;
+}
+
+async function fbUpdateJob(id, jobData) {
+  if (!db) throw new Error('Firebase not initialised');
+  await db.collection('jobs').doc(id).update({
+    ...jobData,
+    adminSecret: ADMIN_PASSWORD
+  });
+}
+
+async function fbDeleteJob(id) {
+  if (!db) throw new Error('Firebase not initialised');
+  await db.collection('jobs').doc(id).delete();
+}
+
+function fbSubscribeJobs(callback) {
+  if (!db) return () => {};
+  try {
+    return db.collection('jobs')
+      .orderBy('createdAt', 'desc')
+      .onSnapshot(snap => {
+        const jobs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        callback(jobs);
+      }, err => console.warn('fbSubscribeJobs error:', err.message));
+  } catch (e) {
+    console.warn('fbSubscribeJobs setup error:', e.message);
+    return () => {};
+  }
+}
 
 // Helper — send via EmailJS
 async function sendEmail(templateId, params) {
@@ -34,6 +120,8 @@ async function sendEmail(templateId, params) {
 // ============================================================
 // HOOKS
 // ============================================================
+const { useState, useEffect, useRef } = React;
+
 function useReveal(options = {}) {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
@@ -506,7 +594,6 @@ function ContactForm({ jobTitle }) {
   const [status, setStatus] = useState('');
   const [statusMsg, setStatusMsg] = useState('');
   const [busy, setBusy] = useState(false);
-
   const [empForm, setEmpForm] = useState({ name:'', company:'', email:'', phone:'', role:jobTitle||'', message:'' });
   const [hrForm,  setHrForm]  = useState({ name:'', email:'', phone:'', position:jobTitle||'', experience:'', cover:'' });
   const fileRef = useRef();
@@ -522,66 +609,28 @@ function ContactForm({ jobTitle }) {
 
   const submitEmployer = async () => {
     const { name, email, message } = empForm;
-    if (!name.trim() || !email.trim() || !message.trim()) {
-      setFeedback('error', 'Please fill in Name, Email and Message — they are required.'); return;
-    }
-    if (!email.includes('@') || !email.includes('.')) {
-      setFeedback('error', 'Please enter a valid email address.'); return;
-    }
-    setBusy(true);
-    setFeedback('loading', 'Sending your enquiry…');
+    if (!name.trim() || !email.trim() || !message.trim()) { setFeedback('error','Please fill in Name, Email and Message — they are required.'); return; }
+    if (!email.includes('@') || !email.includes('.')) { setFeedback('error','Please enter a valid email address.'); return; }
+    setBusy(true); setFeedback('loading','Sending your enquiry…');
     saveEnquiry('employer', { name:empForm.name, email:empForm.email, company:empForm.company, role:empForm.role, phone:empForm.phone, message:empForm.message });
     try {
-      await sendEmail(EMAILJS_TPL_EMPLOYER, {
-        from_name:   empForm.name,
-        company:     empForm.company  || 'Not provided',
-        from_email:  empForm.email,
-        phone:       empForm.phone    || 'Not provided',
-        role_needed: empForm.role     || 'Not specified',
-        message:     empForm.message,
-        to_name:     'JVG Recruitment Team',
-        reply_to:    empForm.email,
-      });
-      setFeedback('success', "Enquiry sent! We'll be in touch within 24 hours.");
-    } catch (e) {
-      console.warn('Employer EmailJS error:', e.message || e);
-      setFeedback('success', "Enquiry received! We'll be in touch within 24 hours.");
-    }
-    setBusy(false);
-    setEmpForm({ name:'', company:'', email:'', phone:'', role:'', message:'' });
+      await sendEmail(EMAILJS_TPL_EMPLOYER, { from_name:empForm.name, company:empForm.company||'Not provided', from_email:empForm.email, phone:empForm.phone||'Not provided', role_needed:empForm.role||'Not specified', message:empForm.message, to_name:'JVG Recruitment Team', reply_to:empForm.email });
+      setFeedback('success',"Enquiry sent! We'll be in touch within 24 hours.");
+    } catch(e) { console.warn('EmailJS error:',e.message); setFeedback('success',"Enquiry received! We'll be in touch within 24 hours."); }
+    setBusy(false); setEmpForm({ name:'', company:'', email:'', phone:'', role:'', message:'' });
   };
 
   const submitHR = async () => {
     const { name, email, position } = hrForm;
-    if (!name.trim() || !email.trim() || !position.trim()) {
-      setFeedback('error', 'Please fill in Name, Email and Position — they are required.'); return;
-    }
-    if (!email.includes('@') || !email.includes('.')) {
-      setFeedback('error', 'Please enter a valid email address.'); return;
-    }
-    setBusy(true);
-    setFeedback('loading', 'Submitting your application…');
+    if (!name.trim() || !email.trim() || !position.trim()) { setFeedback('error','Please fill in Name, Email and Position — they are required.'); return; }
+    if (!email.includes('@') || !email.includes('.')) { setFeedback('error','Please enter a valid email address.'); return; }
+    setBusy(true); setFeedback('loading','Submitting your application…');
     saveEnquiry('candidate', { name:hrForm.name, email:hrForm.email, position:hrForm.position, phone:hrForm.phone, experience:hrForm.experience, cover:hrForm.cover });
     try {
-      await sendEmail(EMAILJS_TPL_CANDIDATE, {
-        from_name:    hrForm.name,
-        from_email:   hrForm.email,
-        phone:        hrForm.phone      || 'Not provided',
-        position:     hrForm.position,
-        experience:   hrForm.experience || 'Not specified',
-        cover_letter: hrForm.cover      || 'Not provided',
-        message:      hrForm.cover      || 'Application submitted via website.',
-        to_name:      'JVG HR Team',
-        reply_to:     hrForm.email,
-      });
-      setFeedback('success', "Application received! We'll review and be in touch shortly.");
-    } catch (e) {
-      console.warn('Candidate EmailJS error:', e.message || e);
-      setFeedback('success', "Application received! We'll review and be in touch shortly.");
-    }
-    setBusy(false);
-    setHrForm({ name:'', email:'', phone:'', position:'', experience:'', cover:'' });
-    setFileName('');
+      await sendEmail(EMAILJS_TPL_CANDIDATE, { from_name:hrForm.name, from_email:hrForm.email, phone:hrForm.phone||'Not provided', position:hrForm.position, experience:hrForm.experience||'Not specified', cover_letter:hrForm.cover||'Not provided', message:hrForm.cover||'Application submitted via website.', to_name:'JVG HR Team', reply_to:hrForm.email });
+      setFeedback('success',"Application received! We'll review and be in touch shortly.");
+    } catch(e) { console.warn('EmailJS error:',e.message); setFeedback('success',"Application received! We'll review and be in touch shortly."); }
+    setBusy(false); setHrForm({ name:'', email:'', phone:'', position:'', experience:'', cover:'' }); setFileName('');
   };
 
   return (
@@ -590,7 +639,6 @@ function ContactForm({ jobTitle }) {
         <button className={`form-tab${tab==='employer'?' active':''}`} onClick={()=>{setTab('employer');setFeedback('','');}}>🏢 I'm Hiring</button>
         <button className={`form-tab${tab==='candidate'?' active':''}`} onClick={()=>{setTab('candidate');setFeedback('','');}}>👤 I'm Job Seeking</button>
       </div>
-
       {tab === 'employer' ? (
         <>
           <div className="form-row">
@@ -603,7 +651,7 @@ function ContactForm({ jobTitle }) {
           </div>
           <div className="form-group"><label className="form-label">Role(s) You're Hiring For</label><input className="form-input" placeholder="e.g. Finance Manager, Sales Lead" value={empForm.role} disabled={busy} onChange={e=>setEmpForm(p=>({...p,role:e.target.value}))}/></div>
           <div className="form-group"><label className="form-label">Tell Us More *</label><textarea className="form-textarea" placeholder="Describe the role, timeline, key requirements…" value={empForm.message} disabled={busy} onChange={e=>setEmpForm(p=>({...p,message:e.target.value}))}/></div>
-          <button className="btn btn--primary w-full" onClick={submitEmployer} disabled={busy}>{busy ? '⏳ Sending…' : 'Send Enquiry →'}</button>
+          <button className="btn btn--primary w-full" onClick={submitEmployer} disabled={busy}>{busy?'⏳ Sending…':'Send Enquiry →'}</button>
         </>
       ) : (
         <>
@@ -619,28 +667,24 @@ function ContactForm({ jobTitle }) {
             <label className="form-label">Years of Experience</label>
             <select className="form-select" value={hrForm.experience} disabled={busy} onChange={e=>setHrForm(p=>({...p,experience:e.target.value}))}>
               <option value="">Select…</option>
-              <option>0–2 years (Entry level)</option>
-              <option>3–5 years (Mid-level)</option>
-              <option>6–10 years (Senior)</option>
-              <option>10+ years (Executive)</option>
+              <option>0–2 years (Entry level)</option><option>3–5 years (Mid-level)</option>
+              <option>6–10 years (Senior)</option><option>10+ years (Executive)</option>
             </select>
           </div>
           <div className="form-group"><label className="form-label">Cover Letter / Notes</label><textarea className="form-textarea" placeholder="Tell us about yourself and what you're looking for…" value={hrForm.cover} disabled={busy} onChange={e=>setHrForm(p=>({...p,cover:e.target.value}))}/></div>
           <div className="form-group">
             <div className="form-upload" onClick={()=>fileRef.current&&fileRef.current.click()}>
               <div className="form-upload__icon">📎</div>
-              <div className="form-upload__text">{fileName || 'Upload your CV (PDF, DOCX — max 5MB)'}</div>
+              <div className="form-upload__text">{fileName||'Upload your CV (PDF, DOCX — max 5MB)'}</div>
               <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" style={{display:'none'}} onChange={e=>{if(e.target.files[0]) setFileName(e.target.files[0].name);}}/>
             </div>
           </div>
-          <button className="btn btn--primary w-full" onClick={submitHR} disabled={busy}>{busy ? '⏳ Submitting…' : 'Submit Application →'}</button>
+          <button className="btn btn--primary w-full" onClick={submitHR} disabled={busy}>{busy?'⏳ Submitting…':'Submit Application →'}</button>
         </>
       )}
-
       {statusMsg && (
         <div className={`form-status form-status--${status}`}>
-          {status === 'loading' ? '⏳ ' : status === 'success' ? '✅ ' : '❌ '}
-          {statusMsg}
+          {status==='loading'?'⏳ ':status==='success'?'✅ ':'❌ '}{statusMsg}
         </div>
       )}
     </div>
@@ -653,11 +697,7 @@ function ContactForm({ jobTitle }) {
 function JobCard({ job, onApply, onLearnMore, delay }) {
   const [ref, vis] = useReveal();
   return (
-    <div
-      ref={ref}
-      className={`job-card reveal${vis?' visible':''}`}
-      style={{transitionDelay:`${delay}s`}}
-    >
+    <div ref={ref} className={`job-card reveal${vis?' visible':''}`} style={{transitionDelay:`${delay}s`}}>
       <div className="job-card__accent-line"/>
       <div className="job-card__header">
         <div className="job-card__industry-row">
@@ -710,8 +750,8 @@ function AboutPage({ setPage }) {
             <div ref={bodyRef}>
               <p className={`eyebrow reveal${bodyVis?' visible':''}`} style={{marginBottom:'1rem'}}>Our Mission</p>
               <h2 className={`display-md reveal reveal-delay-1${bodyVis?' visible':''}`} style={{marginBottom:'1.5rem'}}>Talent Is Our Business</h2>
-              <p className={`about__body reveal reveal-delay-2${bodyVis?' visible':''}`}>JVG Recruitment Solutions was founded with a clear vision: to raise the standard of recruitment in Nigeria. Too many businesses waste time on unsuitable candidates, and too many professionals miss opportunities because they can't find the right representation.</p>
-              <p className={`about__body reveal reveal-delay-3${bodyVis?' visible':''}`}>We built JVG to fix that. Our team of specialist consultants brings domain expertise across hospitality, finance, healthcare, oil and gas, FMCG, and the public sector. We don't just search databases — we build real relationships with both employers and candidates over time.</p>
+              <p className={`about__body reveal reveal-delay-2${bodyVis?' visible':''}`}>JVG Recruitment Solutions was founded with a clear vision: to raise the standard of recruitment in Nigeria.</p>
+              <p className={`about__body reveal reveal-delay-3${bodyVis?' visible':''}`}>We built JVG to fix that. Our team of specialist consultants brings domain expertise across hospitality, finance, healthcare, oil and gas, FMCG, and the public sector.</p>
               <p className={`about__body reveal reveal-delay-4${bodyVis?' visible':''}`}>The result? Placements that stick, careers that flourish, and businesses that grow.</p>
               <div style={{marginTop:'2.5rem'}}><button className="btn btn--primary" onClick={()=>setPage('contact')}>Work With Us →</button></div>
             </div>
@@ -738,21 +778,27 @@ function AboutPage({ setPage }) {
   );
 }
 
+// ── JOBS PAGE — reads live from Firebase ─────────────────────
 function JobsPage({ setPage }) {
-  // Jobs come ONLY from localStorage — no hardcoded sample data
-  const [jobs, setJobs] = useState(() => JSON.parse(localStorage.getItem('jvg_jobs') || '[]'));
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
   const [modalJob, setModalJob] = useState(null);
   const [applyJob, setApplyJob] = useState(null);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    const sync = () => setJobs(JSON.parse(localStorage.getItem('jvg_jobs') || '[]'));
-    window.addEventListener('jvg_jobs_updated', sync);
-    return () => window.removeEventListener('jvg_jobs_updated', sync);
+    // Real-time listener — updates instantly when admin posts/edits/deletes
+    const unsubscribe = fbSubscribeJobs(liveJobs => {
+      setJobs(liveJobs);
+      setLoading(false);
+    });
+    // Fallback: if Firebase not configured, stop loading after 3s
+    const timeout = setTimeout(() => setLoading(false), 3000);
+    return () => { unsubscribe(); clearTimeout(timeout); };
   }, []);
 
-  const industries = ['All', ...Array.from(new Set(jobs.map(j => j.industry)))];
+  const industries = ['All', ...Array.from(new Set(jobs.map(j => j.industry).filter(Boolean)))];
   const filtered = jobs.filter(job => {
     const t = search.trim().toLowerCase();
     const ms = !t || (job.title.toLowerCase().includes(t) || job.location.toLowerCase().includes(t) || job.industry.toLowerCase().includes(t));
@@ -763,27 +809,40 @@ function JobsPage({ setPage }) {
     <>
       <PageHero eyebrow="Opportunities" title="Find Your Next Role" subtitle="Browse current openings across Nigeria's leading employers." stats={JOBS_PAGE_STATS}/>
       <section className="section"><div className="container">
-        <div className="jobs__search-bar">
-          <input className="form-input" placeholder="Search by title, location or industry…" value={search} onChange={e=>setSearch(e.target.value)} style={{maxWidth:'380px'}}/>
-          {search&&<button className="btn btn--ghost btn--sm" onClick={()=>setSearch('')}>✕ Clear</button>}
-          {search&&<span style={{fontFamily:'var(--font-body)',fontSize:'0.82rem',color:'var(--text-muted)',alignSelf:'center'}}>{filtered.length} result{filtered.length!==1?'s':''} found</span>}
-        </div>
-        <div className="jobs__filters">{industries.map(ind=><button key={ind} className={`filter-btn${filter===ind?' active':''}`} onClick={()=>setFilter(ind)}>{ind}</button>)}</div>
 
-        {jobs.length === 0 ? (
+        {loading ? (
           <div className="empty-state">
-            <div className="empty-state__icon">💼</div>
-            <h3 className="empty-state__title">No job listings yet</h3>
-            <p className="empty-state__text">Check back soon — new opportunities are posted regularly.</p>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state__icon">🔍</div>
-            <h3 className="empty-state__title">No roles found</h3>
-            <p className="empty-state__text">{search ? `No jobs match "${search}" — try a different keyword` : 'Try adjusting your filter'}</p>
+            <div className="empty-state__icon" style={{animation:'spin 1s linear infinite',display:'inline-block'}}>⏳</div>
+            <p style={{fontFamily:'var(--font-body)',color:'var(--text-muted)',marginTop:'1rem'}}>Loading opportunities…</p>
           </div>
         ) : (
-          <div className="jobs__grid">{filtered.map((job,i)=><JobCard key={job.id} job={job} delay={(i%3)*0.1} onApply={setApplyJob} onLearnMore={setModalJob}/>)}</div>
+          <>
+            <div className="jobs__search-bar">
+              <input className="form-input" placeholder="Search by title, location or industry…" value={search} onChange={e=>setSearch(e.target.value)} style={{maxWidth:'380px'}}/>
+              {search && <button className="btn btn--ghost btn--sm" onClick={()=>setSearch('')}>✕ Clear</button>}
+              {search && <span style={{fontFamily:'var(--font-body)',fontSize:'0.82rem',color:'var(--text-muted)',alignSelf:'center'}}>{filtered.length} result{filtered.length!==1?'s':''} found</span>}
+            </div>
+            <div className="jobs__filters">
+              {industries.map(ind=><button key={ind} className={`filter-btn${filter===ind?' active':''}`} onClick={()=>setFilter(ind)}>{ind}</button>)}
+            </div>
+            {jobs.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-state__icon">💼</div>
+                <h3 className="empty-state__title">No job listings yet</h3>
+                <p className="empty-state__text">Check back soon — new opportunities are posted regularly.</p>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-state__icon">🔍</div>
+                <h3 className="empty-state__title">No roles found</h3>
+                <p className="empty-state__text">{search?`No jobs match "${search}" — try a different keyword`:'Try adjusting your filter'}</p>
+              </div>
+            ) : (
+              <div className="jobs__grid">
+                {filtered.map((job,i)=><JobCard key={job.id} job={job} delay={(i%3)*0.1} onApply={setApplyJob} onLearnMore={setModalJob}/>)}
+              </div>
+            )}
+          </>
         )}
 
         <div style={{textAlign:'center',marginTop:'3rem'}}>
@@ -792,7 +851,7 @@ function JobsPage({ setPage }) {
         </div>
       </div></section>
 
-      {modalJob&&(
+      {modalJob && (
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setModalJob(null)}>
           <div className="modal modal--job-detail">
             <div className="modal__header">
@@ -800,13 +859,13 @@ function JobsPage({ setPage }) {
               <button className="modal__close" onClick={()=>setModalJob(null)}>✕</button>
             </div>
             <div className="job-card__meta" style={{marginBottom:'0.75rem'}}><span>📍 {modalJob.location}</span><span style={{marginLeft:'1rem'}}>🏢 {modalJob.industry}</span></div>
-            {modalJob.salary&&<div style={{marginBottom:'1.5rem'}}><span className="job-card__salary-value" style={{fontSize:'1rem'}}>💰 {modalJob.salary}</span></div>}
-            {modalJob.description?<div className="job-description" dangerouslySetInnerHTML={{__html:modalJob.description}}/>:<p style={{fontFamily:'var(--font-body)',fontSize:'0.92rem',fontWeight:300,color:'var(--text-secondary)',lineHeight:1.75,marginBottom:'2rem'}}>{modalJob.excerpt}</p>}
+            {modalJob.salary && <div style={{marginBottom:'1.5rem'}}><span className="job-card__salary-value" style={{fontSize:'1rem'}}>💰 {modalJob.salary}</span></div>}
+            {modalJob.description ? <div className="job-description" dangerouslySetInnerHTML={{__html:modalJob.description}}/> : <p style={{fontFamily:'var(--font-body)',fontSize:'0.92rem',fontWeight:300,color:'var(--text-secondary)',lineHeight:1.75,marginBottom:'2rem'}}>{modalJob.excerpt}</p>}
             <div style={{display:'flex',gap:'0.75rem',marginTop:'2rem',flexWrap:'wrap'}}><button className="btn btn--primary" style={{flex:1}} onClick={()=>{setModalJob(null);setApplyJob(modalJob);}}>Apply for This Role →</button></div>
           </div>
         </div>
       )}
-      {applyJob&&(
+      {applyJob && (
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setApplyJob(null)}>
           <div className="modal"><div className="modal__header"><div><p className="eyebrow" style={{marginBottom:'0.5rem'}}>Apply Now</p><h2 className="modal__title">{applyJob.title}</h2></div><button className="modal__close" onClick={()=>setApplyJob(null)}>✕</button></div><ContactForm jobTitle={applyJob.title}/></div>
         </div>
@@ -848,12 +907,10 @@ function AdminLogin({ onLogin }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [show, setShow] = useState(false);
-
   const handleLogin = () => {
     if (password === ADMIN_PASSWORD) { onLogin(); }
     else { setError('Incorrect password. Please try again.'); setPassword(''); }
   };
-
   return (
     <div className="admin-login">
       <div className="admin-login__card">
@@ -863,19 +920,11 @@ function AdminLogin({ onLogin }) {
         {error && <div className="admin-login__error">⚠️ {error}</div>}
         <div className="form-group" style={{marginBottom:'1.25rem',textAlign:'left',position:'relative'}}>
           <label className="form-label">Password</label>
-          <input
-            className="form-input"
-            type={show?'text':'password'}
-            placeholder="Enter admin password"
-            value={password}
-            onChange={e=>{setPassword(e.target.value);setError('');}}
-            onKeyDown={e=>e.key==='Enter'&&handleLogin()}
-            style={{paddingRight:'3rem'}}
-          />
+          <input className="form-input" type={show?'text':'password'} placeholder="Enter admin password" value={password} onChange={e=>{setPassword(e.target.value);setError('');}} onKeyDown={e=>e.key==='Enter'&&handleLogin()} style={{paddingRight:'3rem'}}/>
           <button onClick={()=>setShow(p=>!p)} style={{position:'absolute',right:'0.75rem',top:'2.1rem',background:'none',border:'none',cursor:'pointer',fontSize:'1.1rem',color:'var(--text-muted)'}}>{show?'🙈':'👁️'}</button>
         </div>
         <button className="btn btn--primary w-full" onClick={handleLogin}>Sign In →</button>
-        <p style={{marginTop:'1.5rem',fontFamily:'var(--font-body)',fontSize:'0.78rem',color:'var(--text-muted)',fontWeight:300}}><strong>🔒 Authorised personnel only. </strong>For access issues, contact your system administrator</p>
+        <p style={{marginTop:'1.5rem',fontFamily:'var(--font-body)',fontSize:'0.78rem',color:'var(--text-muted)',fontWeight:300}}><strong>🔒 Authorised personnel only.</strong> For access issues, contact your system administrator</p>
       </div>
     </div>
   );
@@ -898,13 +947,13 @@ function EnquiryDetailModal({ enquiry, onClose, onMarkRead, onDelete }) {
         </div>
         <div className="enquiry-detail">
           <div className="enquiry-detail__field"><div className="enquiry-detail__label">Email</div><div className="enquiry-detail__value"><a href={`mailto:${enquiry.email}`} style={{color:'var(--gold)'}}>{enquiry.email}</a></div></div>
-          {enquiry.phone && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Phone</div><div className="enquiry-detail__value">{enquiry.phone}</div></div>}
-          {enquiry.company && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Company</div><div className="enquiry-detail__value">{enquiry.company}</div></div>}
-          {enquiry.role && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Role Needed</div><div className="enquiry-detail__value">{enquiry.role}</div></div>}
+          {enquiry.phone    && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Phone</div><div className="enquiry-detail__value">{enquiry.phone}</div></div>}
+          {enquiry.company  && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Company</div><div className="enquiry-detail__value">{enquiry.company}</div></div>}
+          {enquiry.role     && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Role Needed</div><div className="enquiry-detail__value">{enquiry.role}</div></div>}
           {enquiry.position && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Position Sought</div><div className="enquiry-detail__value">{enquiry.position}</div></div>}
-          {enquiry.experience && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Experience</div><div className="enquiry-detail__value">{enquiry.experience}</div></div>}
-          {enquiry.message && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Message</div><div className="enquiry-detail__value" style={{whiteSpace:'pre-wrap'}}>{enquiry.message}</div></div>}
-          {enquiry.cover && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Cover Letter</div><div className="enquiry-detail__value" style={{whiteSpace:'pre-wrap'}}>{enquiry.cover}</div></div>}
+          {enquiry.experience&&<div className="enquiry-detail__field"><div className="enquiry-detail__label">Experience</div><div className="enquiry-detail__value">{enquiry.experience}</div></div>}
+          {enquiry.message  && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Message</div><div className="enquiry-detail__value" style={{whiteSpace:'pre-wrap'}}>{enquiry.message}</div></div>}
+          {enquiry.cover    && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Cover Letter</div><div className="enquiry-detail__value" style={{whiteSpace:'pre-wrap'}}>{enquiry.cover}</div></div>}
           <div className="enquiry-detail__field"><div className="enquiry-detail__label">Received</div><div className="enquiry-detail__value">{new Date(enquiry.date).toLocaleString('en-GB',{dateStyle:'full',timeStyle:'short'})}</div></div>
         </div>
         <div style={{display:'flex',gap:'0.75rem',marginTop:'1.5rem',flexWrap:'wrap'}}>
@@ -935,14 +984,17 @@ function AdminStatCard({ icon, label, value, colour, delay }) {
 }
 
 // ============================================================
-// ADMIN PANEL
+// ADMIN PANEL — Jobs saved to Firebase, visible to all
 // ============================================================
 function AdminPanel({ onClose, toggleTheme, theme }) {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [enquiries, setEnquiries] = useState(()=>JSON.parse(localStorage.getItem('jvg_enquiries')||'[]'));
-  const [jobs, setJobs] = useState(()=>JSON.parse(localStorage.getItem('jvg_jobs')||'[]'));
+  const [jobs, setJobs] = useState([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
   const [showJobForm, setShowJobForm] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState('');
   const [enquiryTab, setEnquiryTab] = useState('all');
   const [viewEnquiry, setViewEnquiry] = useState(null);
   const [jobSearch, setJobSearch] = useState('');
@@ -951,12 +1003,15 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
   const emptyJob = { title:'', type:'Permanent', location:'', industry:'', salaryAmount:'', excerpt:'', description:'' };
   const [jobForm, setJobForm] = useState(emptyJob);
 
+  // Subscribe to Firebase live feed
+  useEffect(() => {
+    const unsub = fbSubscribeJobs(liveJobs => { setJobs(liveJobs); setJobsLoading(false); });
+    const timeout = setTimeout(() => setJobsLoading(false), 4000);
+    return () => { unsub(); clearTimeout(timeout); };
+  }, []);
+
   const filteredAdminJobs = jobSearch.trim()
-    ? jobs.filter(j =>
-        j.title.toLowerCase().includes(jobSearch.toLowerCase()) ||
-        j.location.toLowerCase().includes(jobSearch.toLowerCase()) ||
-        j.industry.toLowerCase().includes(jobSearch.toLowerCase())
-      )
+    ? jobs.filter(j => j.title.toLowerCase().includes(jobSearch.toLowerCase()) || j.location.toLowerCase().includes(jobSearch.toLowerCase()) || j.industry.toLowerCase().includes(jobSearch.toLowerCase()))
     : jobs;
 
   const unread = enquiries.filter(e=>!e.read).length;
@@ -974,46 +1029,51 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
   const deleteEnquiry = id => persistEnquiries(enquiries.filter(e=>e.id!==id));
   const markAllRead   = () => persistEnquiries(enquiries.map(e=>({...e,read:true})));
 
-  const persistJobs = (updated) => {
-    setJobs(updated);
-    localStorage.setItem('jvg_jobs', JSON.stringify(updated));
-    window.dispatchEvent(new Event('jvg_jobs_updated'));
-  };
-
   const buildSalary = (form) => {
     if (!form.salaryAmount || !form.salaryAmount.trim()) return '';
     let amt = form.salaryAmount.trim();
     if (amt.startsWith('₦')) amt = amt.slice(1).trim();
     const hasQualifier = /\/(month|year|mo|yr|week)/i.test(amt);
-    return `₦${amt}${hasQualifier ? '' : ' / month'}`;
+    return `₦${amt}${hasQualifier?'':' / month'}`;
   };
 
-  const saveJob = () => {
+  const saveJob = async () => {
     if (!jobForm.title || !jobForm.location) { alert('Job title and location are required.'); return; }
+    setSaving(true); setSaveMsg('');
     const salary = buildSalary(jobForm);
     const jobData = { title:jobForm.title, type:jobForm.type, location:jobForm.location, industry:jobForm.industry, salary, excerpt:jobForm.excerpt, description:jobForm.description };
-    const updated = editingJob
-      ? jobs.map(j => j.id === editingJob.id ? { ...jobData, id:j.id } : j)
-      : [{ ...jobData, id:Date.now() }, ...jobs];
-    persistJobs(updated);
-    setJobForm(emptyJob); setShowJobForm(false); setEditingJob(null);
+    try {
+      if (editingJob) {
+        await fbUpdateJob(editingJob.id, jobData);
+        setSaveMsg('✅ Job updated successfully — live for all visitors!');
+      } else {
+        await fbSaveJob(jobData);
+        setSaveMsg('🚀 Job published — visible to everyone now!');
+      }
+      setJobForm(emptyJob); setShowJobForm(false); setEditingJob(null);
+    } catch(e) {
+      setSaveMsg('❌ Error: ' + e.message + '. Check your Firebase config in app.jsx.');
+    }
+    setSaving(false);
+    setTimeout(() => setSaveMsg(''), 5000);
   };
 
   const editJob = job => {
     const raw = job.salary ? job.salary.replace(/^₦/,'') : '';
     setJobForm({ ...job, salaryAmount: raw });
-    setEditingJob(job);
-    setShowJobForm(true);
-    setActiveSection('jobs');
+    setEditingJob(job); setShowJobForm(true); setActiveSection('jobs');
   };
 
-  const deleteJob = id => {
-    if (!window.confirm('Delete this job listing?')) return;
-    persistJobs(jobs.filter(j => j.id !== id));
+  const deleteJob = async id => {
+    if (!window.confirm('Delete this job listing? This cannot be undone.')) return;
+    try { await fbDeleteJob(id); }
+    catch(e) { alert('Delete failed: ' + e.message); }
   };
 
-  const duplicateJob = job => {
-    persistJobs([{ ...job, id:Date.now(), title:job.title+' (Copy)' }, ...jobs]);
+  const duplicateJob = async job => {
+    const { id, createdAt, ...rest } = job;
+    try { await fbSaveJob({ ...rest, title: rest.title + ' (Copy)' }); }
+    catch(e) { alert('Duplicate failed: ' + e.message); }
   };
 
   const filteredEnquiries = enquiryTab==='all' ? enquiries : enquiryTab==='employer' ? empEnquiries : candEnquiries;
@@ -1022,13 +1082,12 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
     { icon:'🏢', label:'Employer Enquiries',     value:empEnquiries.length, colour:'gold'  },
     { icon:'👤', label:'Candidate Applications', value:candEnquiries.length, colour:'blue'  },
     { icon:'🔔', label:'Unread Messages',         value:unread,              colour:'red'   },
-    { icon:'💼', label:'Active Job Listings',     value:jobs.length,         colour:'green' },
+    { icon:'💼', label:'Live Job Listings',       value:jobs.length,         colour:'green' },
   ];
 
   return (
     <div className="admin-shell">
       <div className={"admin-sidebar-overlay"+(sidebarOpen?" visible":"")} onClick={()=>setSidebarOpen(false)}/>
-
       <aside className={"admin-sidebar"+(sidebarOpen?" open":"")}>
         <div className="admin-sidebar__brand">
           <div className="navbar__logo-mark" style={{width:36,height:36,fontSize:'0.9rem'}}>JVG</div>
@@ -1037,8 +1096,7 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
         <nav className="admin-sidebar__nav">
           {navItems.map(item=>(
             <button key={item.id} className={"admin-nav-item"+(activeSection===item.id?" active":"")} onClick={()=>{setActiveSection(item.id);setSidebarOpen(false);}}>
-              <span className="nav-icon">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="nav-icon">{item.icon}</span><span>{item.label}</span>
               {item.badge ? <span className="admin-nav-badge">{item.badge}</span> : null}
             </button>
           ))}
@@ -1054,13 +1112,13 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
           <div style={{flex:1}}>
             <p className="eyebrow" style={{marginBottom:'0.2rem'}}>JVG Recruitment Solutions</p>
             <h1 className="admin-topbar__title">
-              {activeSection==='dashboard' && 'Dashboard'}
-              {activeSection==='jobs'      && 'Job Listings'}
-              {activeSection==='enquiries' && 'Enquiries'}
+              {activeSection==='dashboard'&&'Dashboard'}
+              {activeSection==='jobs'&&'Job Listings'}
+              {activeSection==='enquiries'&&'Enquiries'}
             </h1>
           </div>
           <div className="admin-topbar__actions">
-            <button className="btn-theme" onClick={toggleTheme} title="Toggle theme">{theme==='dark'?'☀️':'🌙'}</button>
+            <button className="btn-theme" onClick={toggleTheme}>{theme==='dark'?'☀️':'🌙'}</button>
             {activeSection==='jobs' && (
               <button className="btn btn--primary btn--sm" onClick={()=>{setShowJobForm(!showJobForm);setEditingJob(null);setJobForm(emptyJob);}}>
                 {showJobForm?'✕ Cancel':'+ Post New Job'}
@@ -1078,10 +1136,14 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
           {activeSection==='dashboard' && (
             <>
               <div className="admin-stats-row">
-                {statCards.map((s,i)=>(
-                  <AdminStatCard key={i} icon={s.icon} label={s.label} value={s.value} colour={s.colour} delay={i*0.1}/>
-                ))}
+                {statCards.map((s,i)=><AdminStatCard key={i} icon={s.icon} label={s.label} value={s.value} colour={s.colour} delay={i*0.1}/>)}
               </div>
+              {/* Firebase config warning banner */}
+              {FIREBASE_CONFIG.apiKey === 'REPLACE_WITH_YOUR_API_KEY' && (
+                <div style={{background:'rgba(192,57,43,0.1)',border:'1px solid rgba(192,57,43,0.3)',borderRadius:'var(--radius-md)',padding:'1rem 1.25rem',marginBottom:'1.5rem',fontFamily:'var(--font-body)',fontSize:'0.86rem',color:'#c0392b'}}>
+                  <strong>⚠️ Firebase not configured yet.</strong> Jobs you post will not be visible to site visitors until you add your Firebase config to app.jsx. <a href="https://firebase.google.com" target="_blank" rel="noreferrer" style={{color:'#c0392b',textDecoration:'underline'}}>Set up Firebase free →</a>
+                </div>
+              )}
               <div className="admin-dashboard-grid">
                 <div className="admin-panel-card">
                   <div className="admin-panel-card__header">
@@ -1089,10 +1151,7 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
                     <button className="btn btn--ghost btn--sm" onClick={()=>setActiveSection('enquiries')}>View All</button>
                   </div>
                   {enquiries.length===0 ? (
-                    <div className="empty-state" style={{padding:'2rem'}}>
-                      <div className="empty-state__icon">📭</div>
-                      <p style={{fontFamily:'var(--font-body)',fontSize:'0.85rem',color:'var(--text-muted)'}}>No enquiries yet. They'll appear here when the contact form is submitted.</p>
-                    </div>
+                    <div className="empty-state" style={{padding:'2rem'}}><div className="empty-state__icon">📭</div><p style={{fontFamily:'var(--font-body)',fontSize:'0.85rem',color:'var(--text-muted)'}}>No enquiries yet.</p></div>
                   ) : (
                     <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Name</th><th>Type</th><th>Company / Role</th><th>Status</th></tr></thead>
                       <tbody>{enquiries.slice(0,6).map(e=>(
@@ -1108,14 +1167,13 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
                 </div>
                 <div className="admin-panel-card">
                   <div className="admin-panel-card__header">
-                    <span className="admin-panel-card__title">Active Job Listings</span>
+                    <span className="admin-panel-card__title">Live Job Listings</span>
                     <button className="btn btn--ghost btn--sm" onClick={()=>setActiveSection('jobs')}>Manage</button>
                   </div>
-                  {jobs.length === 0 ? (
-                    <div className="empty-state" style={{padding:'2rem'}}>
-                      <div className="empty-state__icon">💼</div>
-                      <p style={{fontFamily:'var(--font-body)',fontSize:'0.85rem',color:'var(--text-muted)'}}>No jobs yet. Click "Job Listings" then "+ Post New Job" to add your first listing.</p>
-                    </div>
+                  {jobsLoading ? (
+                    <div className="empty-state" style={{padding:'2rem'}}><p style={{fontFamily:'var(--font-body)',fontSize:'0.85rem',color:'var(--text-muted)'}}>⏳ Loading…</p></div>
+                  ) : jobs.length === 0 ? (
+                    <div className="empty-state" style={{padding:'2rem'}}><div className="empty-state__icon">💼</div><p style={{fontFamily:'var(--font-body)',fontSize:'0.85rem',color:'var(--text-muted)'}}>No jobs yet. Go to Job Listings → "+ Post New Job".</p></div>
                   ) : (
                     <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Title</th><th>Location</th><th>Type</th></tr></thead>
                       <tbody>{jobs.slice(0,6).map(j=><tr key={j.id}><td style={{fontWeight:600,fontSize:'0.82rem'}}>{getJobIcon(j.industry)} {j.title}</td><td style={{fontSize:'0.82rem'}}>{j.location}</td><td><span className="badge badge--active" style={{fontSize:'0.65rem'}}>{j.type}</span></td></tr>)}</tbody>
@@ -1129,6 +1187,11 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
           {/* ── JOBS ── */}
           {activeSection==='jobs' && (
             <>
+              {saveMsg && (
+                <div style={{background: saveMsg.startsWith('✅')||saveMsg.startsWith('🚀') ? 'rgba(44,62,45,0.12)' : 'rgba(192,57,43,0.1)', border:'1px solid '+(saveMsg.startsWith('✅')||saveMsg.startsWith('🚀')?'rgba(44,62,45,0.2)':'rgba(192,57,43,0.3)'), borderRadius:'var(--radius-md)', padding:'0.85rem 1.25rem', marginBottom:'1rem', fontFamily:'var(--font-body)', fontSize:'0.88rem', color: saveMsg.startsWith('✅')||saveMsg.startsWith('🚀')?'var(--accent-light)':'#c0392b'}}>
+                  {saveMsg}
+                </div>
+              )}
               {showJobForm && (
                 <div className="job-form-panel">
                   <p className="job-form-panel__title">{editingJob?'✏️ Edit Job Listing':'➕ Post New Job Listing'}</p>
@@ -1144,40 +1207,37 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
                     <label className="form-label">Salary Range</label>
                     <div className="salary-input-wrap">
                       <span className="salary-input-prefix">₦</span>
-                      <input
-                        className="form-input salary-input-field"
-                        placeholder="e.g. 500K – 800K / month"
-                        value={jobForm.salaryAmount}
-                        onChange={e=>setJobForm(p=>({...p,salaryAmount:e.target.value}))}
-                      />
+                      <input className="form-input salary-input-field" placeholder="e.g. 500K – 800K / month" value={jobForm.salaryAmount} onChange={e=>setJobForm(p=>({...p,salaryAmount:e.target.value}))}/>
                     </div>
                     <p style={{fontFamily:'var(--font-body)',fontSize:'0.72rem',color:'var(--text-muted)',marginTop:'0.35rem'}}>Enter the amount only — ₦ and "/ month" are added automatically.</p>
                   </div>
-                  <div className="form-group" style={{marginBottom:'1rem'}}><label className="form-label">Short Excerpt (shown on card) *</label><textarea className="form-textarea" style={{minHeight:'70px'}} placeholder="1-2 sentence summary shown on the job listing card…" value={jobForm.excerpt} onChange={e=>setJobForm(p=>({...p,excerpt:e.target.value}))}/></div>
+                  <div className="form-group" style={{marginBottom:'1rem'}}><label className="form-label">Short Excerpt (shown on card)</label><textarea className="form-textarea" style={{minHeight:'70px'}} placeholder="1-2 sentence summary shown on the job listing card…" value={jobForm.excerpt} onChange={e=>setJobForm(p=>({...p,excerpt:e.target.value}))}/></div>
                   <div className="form-group">
                     <label className="form-label">Full Job Description — HTML supported</label>
-                    <p style={{fontFamily:'var(--font-body)',fontSize:'0.75rem',color:'var(--text-muted)',marginBottom:'0.5rem'}}>You can use: &lt;h4&gt; for headings, &lt;ul&gt;&lt;li&gt; for bullet lists, &lt;p&gt; for paragraphs</p>
+                    <p style={{fontFamily:'var(--font-body)',fontSize:'0.75rem',color:'var(--text-muted)',marginBottom:'0.5rem'}}>Use: &lt;h4&gt; headings, &lt;ul&gt;&lt;li&gt; bullet lists, &lt;p&gt; paragraphs</p>
                     <textarea className="form-textarea" style={{minHeight:'160px',fontFamily:'monospace',fontSize:'0.82rem'}} placeholder={`<h4>About the Role</h4>\n<p>Description here...</p>`} value={jobForm.description} onChange={e=>setJobForm(p=>({...p,description:e.target.value}))}/>
                   </div>
                   <div style={{display:'flex',gap:'0.75rem',marginTop:'0.5rem'}}>
-                    <button className="btn btn--primary btn--sm" onClick={saveJob}>{editingJob?'💾 Save Changes':'🚀 Publish Job'}</button>
+                    <button className="btn btn--primary btn--sm" onClick={saveJob} disabled={saving}>{saving?'⏳ Saving…':editingJob?'💾 Save Changes':'🚀 Publish Live'}</button>
                     <button className="btn btn--outline btn--sm" onClick={()=>{setShowJobForm(false);setEditingJob(null);setJobForm(emptyJob);}}>Cancel</button>
                   </div>
                 </div>
               )}
               <div className="admin-panel-card">
                 <div className="admin-panel-card__header">
-                  <span className="admin-panel-card__title">All Job Listings</span>
+                  <span className="admin-panel-card__title">All Live Job Listings</span>
                   <div style={{display:'flex',gap:'0.75rem',alignItems:'center'}}>
                     <input className="form-input" placeholder="Search jobs…" value={jobSearch} onChange={e=>setJobSearch(e.target.value)} style={{width:'200px',padding:'0.5rem 0.75rem',fontSize:'0.82rem'}}/>
                     <span className="admin-panel-card__meta">{filteredAdminJobs.length} of {jobs.length}</span>
                   </div>
                 </div>
-                {jobs.length === 0 ? (
+                {jobsLoading ? (
+                  <div className="empty-state" style={{padding:'2rem'}}><p style={{fontFamily:'var(--font-body)',color:'var(--text-muted)'}}>⏳ Loading from Firebase…</p></div>
+                ) : jobs.length === 0 ? (
                   <div className="empty-state" style={{padding:'3rem'}}>
                     <div className="empty-state__icon">💼</div>
                     <h3 className="empty-state__title">No jobs posted yet</h3>
-                    <p className="empty-state__text">Click "+ Post New Job" above to add your first listing.</p>
+                    <p className="empty-state__text">Click "+ Post New Job" above to add your first listing. It will go live instantly for all visitors.</p>
                   </div>
                 ) : filteredAdminJobs.length === 0 ? (
                   <div className="empty-state"><div className="empty-state__icon">🔍</div><h3 className="empty-state__title">No jobs match your search</h3></div>
@@ -1193,9 +1253,9 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
                           <td style={{fontSize:'0.8rem',color:'var(--text-muted)'}}>{j.salary||'—'}</td>
                           <td><span className="badge badge--active">{j.type}</span></td>
                           <td><div className="td-actions">
-                            <button className="btn btn--ghost btn--icon" title="Edit"   onClick={()=>editJob(j)}>✏️</button>
+                            <button className="btn btn--ghost btn--icon" title="Edit"      onClick={()=>editJob(j)}>✏️</button>
                             <button className="btn btn--ghost btn--icon" title="Duplicate" onClick={()=>duplicateJob(j)}>📋</button>
-                            <button className="btn btn--danger btn--icon" title="Delete"  onClick={()=>deleteJob(j.id)}>🗑️</button>
+                            <button className="btn btn--danger btn--icon" title="Delete"   onClick={()=>deleteJob(j.id)}>🗑️</button>
                           </div></td>
                         </tr>
                       ))}</tbody>
@@ -1251,12 +1311,7 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
       </main>
 
       {viewEnquiry && (
-        <EnquiryDetailModal
-          enquiry={viewEnquiry}
-          onClose={()=>setViewEnquiry(null)}
-          onMarkRead={markRead}
-          onDelete={deleteEnquiry}
-        />
+        <EnquiryDetailModal enquiry={viewEnquiry} onClose={()=>setViewEnquiry(null)} onMarkRead={markRead} onDelete={deleteEnquiry}/>
       )}
     </div>
   );
@@ -1272,9 +1327,7 @@ function Footer({ setPage }) {
         <div className="footer__grid">
           <div>
             <div className="footer__brand-logo"><div className="navbar__logo-mark">JVG</div>JVG Recruitment</div>
-            <p className="footer__tagline">Connecting employers with performance-ready talent across Nigeria.
-              Specialists in hotel staffing, corporate recruitment,
-              and HR outsourcing for businesses that can't afford hiring mistakes.</p>
+            <p className="footer__tagline">Connecting employers with performance-ready talent across Nigeria. Specialists in hotel staffing, corporate recruitment, and HR outsourcing for businesses that can't afford hiring mistakes.</p>
           </div>
           <div>
             <p className="footer__col-title">Company</p>
@@ -1322,17 +1375,15 @@ function App() {
   const [keySeq, setKeySeq] = useState('');
 
   useEffect(()=>{ document.documentElement.setAttribute('data-theme',theme); localStorage.setItem('jvg_theme',theme); },[theme]);
-
   useEffect(()=>{
     const handler = e => {
       const seq = (keySeq+e.key).slice(-8);
       setKeySeq(seq);
-      if (seq === 'jvgadmin') setAdminMode(true);
+      if (seq==='jvgadmin') setAdminMode(true);
     };
     window.addEventListener('keypress', handler);
     return () => window.removeEventListener('keypress', handler);
   },[keySeq]);
-
   useEffect(()=>{ if(!adminMode) window.scrollTo({top:0,behavior:'smooth'}); },[page]);
 
   const toggleTheme = () => setTheme(t=>t==='light'?'dark':'light');
