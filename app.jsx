@@ -1,1635 +1,1342 @@
-/* ═══════════════════════════════════════════════════════════
-   JVG Recruitment Solutions — app.jsx  (PREMIUM EDITION)
-   ═══════════════════════════════════════════════════════════ */
-   const { useState, useEffect, useRef, useCallback } = React;
+// ============================================================
+// JVG RECRUITMENT SOLUTIONS — app.jsx
+// Email delivery: EmailJS → info@jvgrecruitmentsolutions.com
+// Admin access: type "jvgadmin" anywhere on page
+// Admin password: jvgadmin862
+// ============================================================
 
-   /* ─── ADMIN CREDENTIALS ─── */
-   const ADMIN_PASSWORD = 'jvgadmin862';
-   
-   /* ─── DEFAULT JOB DATA ─── */
-   const DEFAULT_JOBS = [
-     { id:1, icon:'💼', badge:'full-time',  title:'Sales Executive',           location:'Abuja, FCT',      industry:'FMCG / Retail',     salary:'₦120,000 – ₦180,000/mo', description:'Drive sales growth and manage client relationships in our Abuja territory.', active:true },
-     { id:2, icon:'🗂️', badge:'full-time',  title:'Office Administrator',      location:'Lagos, Nigeria',  industry:'Corporate / Admin',  salary:'₦90,000 – ₦130,000/mo',  description:'Manage daily office operations, scheduling, and administrative tasks.', active:true },
-     { id:3, icon:'⚙️', badge:'contract',   title:'Civil Engineer',            location:'Port Harcourt',   industry:'Construction',       salary:'₦350,000 – ₦500,000/mo', description:'Lead civil engineering projects on major construction sites.', active:true },
-     { id:4, icon:'📊', badge:'full-time',  title:'Accountant',                location:'Abuja, FCT',      industry:'Finance / Banking',  salary:'₦150,000 – ₦220,000/mo', description:'Handle financial reporting, auditing, and tax compliance.', active:true },
-     { id:5, icon:'💻', badge:'remote',     title:'Digital Marketing Officer', location:'Remote / Lagos',  industry:'Marketing',          salary:'₦100,000 – ₦160,000/mo', description:'Manage social media, campaigns, SEO and digital strategy.', active:true },
-     { id:6, icon:'🏥', badge:'full-time',  title:'Registered Nurse',          location:'Abuja, FCT',      industry:'Healthcare',         salary:'₦130,000 – ₦200,000/mo', description:'Provide professional nursing care in a leading healthcare facility.', active:true },
-   ];
-   
-   const BADGE_OPTIONS = [
-     { value:'full-time', label:'Full-Time' },
-     { value:'contract',  label:'Contract'  },
-     { value:'remote',    label:'Remote'    },
-     { value:'part-time', label:'Part-Time' },
-   ];
-   
-   const ICON_OPTIONS = ['💼','🗂️','⚙️','📊','💻','🏥','🏗️','🎓','📦','🔧','🧪','🎨','📞','🏦','✈️','🌿','🔬','📱','🍽️','🏨'];
-   
-   /* ─── STORAGE HELPERS ─── */
-   function loadJobs() {
-     try { const s = localStorage.getItem('jvg_jobs'); return s ? JSON.parse(s) : DEFAULT_JOBS; } catch { return DEFAULT_JOBS; }
-   }
-   function saveJobs(jobs) {
-     try { localStorage.setItem('jvg_jobs', JSON.stringify(jobs)); } catch {}
-   }
-   function loadEnquiries() {
-     try { const s = localStorage.getItem('jvg_enquiries'); return s ? JSON.parse(s) : []; } catch { return []; }
-   }
-   function saveEnquiries(list) {
-     try { localStorage.setItem('jvg_enquiries', JSON.stringify(list)); } catch {}
-   }
-   
-   /* ─── SCROLL REVEAL HOOK ─── */
-   function useReveal() {
-     const refs = useRef([]);
-     useEffect(() => {
-       const observer = new IntersectionObserver(
-         entries => entries.forEach(e => {
-           if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
-         }),
-         { threshold: 0.08 }
-       );
-       refs.current.forEach(el => el && observer.observe(el));
-       return () => observer.disconnect();
-     }, []);
-     const ref = useCallback((el, i = refs.current.length) => { refs.current[i] = el; }, []);
-     return ref;
-   }
-   
-   /* ─── STAR FIELD ─── */
-   function StarField() {
-     const stars = Array.from({ length: 60 }, (_, i) => ({
-       id: i,
-       top:   `${Math.random() * 100}%`,
-       left:  `${Math.random() * 100}%`,
-       dur:   `${2 + Math.random() * 5}s`,
-       delay: `${Math.random() * 6}s`,
-       size:  Math.random() > 0.9 ? '3px' : '1.5px',
-       opacity: 0.2 + Math.random() * 0.5,
-     }));
-     return (
-       <div className="hero-stars">
-         {stars.map(s => (
-           <div key={s.id} className="star" style={{
-             top:s.top, left:s.left,
-             '--dur':s.dur, '--delay':s.delay,
-             width:s.size, height:s.size, opacity:s.opacity,
-           }} />
-         ))}
-       </div>
-     );
-   }
-   
-   /* ══════════════════════════════════════════════════
-      NAVBAR
-      ══════════════════════════════════════════════════ */
-   function Navbar({ onViewContact }) {
-     const [scrolled, setScrolled] = useState(false);
-     const [menuOpen, setMenuOpen] = useState(false);
-   
-     useEffect(() => {
-       const fn = () => setScrolled(window.scrollY > 60);
-       window.addEventListener('scroll', fn);
-       return () => window.removeEventListener('scroll', fn);
-     }, []);
+// ── EMAILJS CREDENTIALS ──────────────────────────────────────
+const EMAILJS_PUBLIC_KEY    = 'd26MprEm9Q41eC6-g';
+const EMAILJS_SERVICE_ID    = 'service_thy1736';
+const EMAILJS_TPL_EMPLOYER  = 'template_xr9ktpo';
+const EMAILJS_TPL_CANDIDATE = 'template_b05p02z';
 
-     const handleNavClick = (e, label) => {
-       if (label === 'How It Works') {
-         e.preventDefault();
-         setMenuOpen(false);
-         const el = document.getElementById('how-it-works');
-         if (el) el.scrollIntoView({ behavior: 'smooth' });
-       } else if (label === 'Contact') {
-         e.preventDefault();
-         setMenuOpen(false);
-         const el = document.getElementById('contact');
-         if (el) el.scrollIntoView({ behavior: 'smooth' });
-       } else {
-         setMenuOpen(false);
-       }
-     };
-   
-     const links = ['About','Services','Jobs','How It Works','Contact'];
-     const getLinkHref = (l) => {
-       if (l === 'How It Works') return '#how-it-works';
-       return `#${l.toLowerCase().replace(' ','-')}`;
-     };
-   
-     return (
-       <>
-         <nav className={`navbar${scrolled ? ' scrolled' : ''}`}>
-           <a href="#home" className="nav-logo">
-             <div className="nav-logo-mark">JVG</div>
-             <div>
-               <span className="nav-logo-name">JVG Recruitment</span>
-               <span className="nav-logo-sub">Solutions</span>
-             </div>
-           </a>
-           <div className="nav-links">
-             {links.map(l => (
-               <a key={l} href={getLinkHref(l)} onClick={e => handleNavClick(e, l)}>{l}</a>
-             ))}
-             <a href="#contact" className="nav-cta" onClick={e => handleNavClick(e, 'Contact')}>Post a Job</a>
-           </div>
-           <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
-             <span /><span /><span />
-           </button>
-         </nav>
-         <div className={`mobile-menu${menuOpen ? ' open' : ''}`}>
-           {links.map(l => (
-             <a key={l} href={getLinkHref(l)} onClick={e => handleNavClick(e, l)}>{l}</a>
-           ))}
-           <a href="#contact" className="m-cta" onClick={e => handleNavClick(e, 'Contact')}>📋 Post a Job</a>
-         </div>
-       </>
-     );
-   }
-   
-   /* ══════════════════════════════════════════════════
-      HERO
-      ══════════════════════════════════════════════════ */
-   function Hero() {
-     const stats = [
-       { num:'500+', label:'Placements Made'   },
-       { num:'80+',  label:'Employer Clients'  },
-       { num:'15+',  label:'Industries Served' },
-       { num:'96%',  label:'Satisfaction Rate' },
-     ];
-     return (
-       <section className="hero" id="home">
-         <div className="hero-gold-line" />
-         <div className="hero-bottom-line" />
-         <div className="hero-bg">
-           <div className="hero-orb hero-orb-1" />
-           <div className="hero-orb hero-orb-2" />
-           <div className="hero-orb hero-orb-3" />
-           <div className="hc hc1" />
-           <div className="hc hc2" />
-           <div className="hc hc3" />
-           <StarField />
-         </div>
-   
-         <div className="hero-content">
-           <div className="hero-eyebrow">
-             <span className="hero-eyebrow-line" />
-             <span>Nigeria's Premier Recruitment Agency</span>
-             <span className="hero-eyebrow-dot" />
-           </div>
-   
-           <h1 className="hero-title">
-             Professional Recruitment &amp;<br />
-             <em>HR Outsourcing Services</em><br />
-             Across Nigeria
-           </h1>
-   
-           <p className="hero-sub">
-             From front desk to executive management — we source, screen, and deliver
-             performance-ready talent to hotels, corporations, and businesses across
-             Abuja, Lagos, and every Nigerian state.
-           </p>
-   
-           <div className="hero-proposition">
-             <span>✦</span>
-             From Front Desk to Management — Pre-Screened, Performance-Ready Staff for Hotels &amp; Corporate Organisations. Delivered in Days, Not Months.
-           </div>
-   
-           <div className="hero-btns">
-             <button className="btn-primary" onClick={()=>window.__goToContact&&window.__goToContact()}><span>📋 Post a Job Vacancy</span></button>
-             <a href="#jobs"    className="btn-secondary"><span>🔍 Browse Openings</span></a>
-             <button className="btn-secondary" onClick={()=>window.__goToContact&&window.__goToContact()}><span>📄 Submit Your Resume</span></button>
-           </div>
-   
-           <div className="hero-stats">
-             {stats.map(s => (
-               <div key={s.label} className="hero-stat">
-                 <div className="hero-stat-num">{s.num}</div>
-                 <div className="hero-stat-label">{s.label}</div>
-               </div>
-             ))}
-           </div>
-         </div>
-       </section>
-     );
-   }
-   
-   /* ══════════════════════════════════════════════════
-      BENEFITS — "WHY CHOOSE JVG"
-      ══════════════════════════════════════════════════ */
-   function Benefits() {
-     const ref = useReveal();
-     const cards = [
-       {
-         icon: '🎯',
-         title: 'Eliminate Bad Hires. Guaranteed.',
-         desc: 'Every candidate is rigorously screened, verified, and assessed before they ever reach your desk. We eliminate costly hiring mistakes so you can focus on running your business.',
-       },
-       {
-         icon: '⚡',
-         title: 'Pre-Vetted Staff in Days — Not Months',
-         desc: 'Our deep talent pipeline means we can deliver qualified, job-ready candidates in days. No lengthy waits, no wasted interviews — just the right people, fast.',
-       },
-       {
-         icon: '🏨',
-         title: 'Specialists in Hotels & Corporate Staffing',
-         desc: 'From front desk and housekeeping to finance and management, we understand the unique demands of hospitality and corporate environments across Nigeria.',
-       },
-       {
-         icon: '🛡️',
-         title: 'Stop Losing Money to Poor Staffing',
-         desc: 'A bad hire costs far more than our fee. We protect your bottom line with thorough background checks, reference verifications, and skills assessments on every candidate.',
-       },
-       {
-         icon: '🌍',
-         title: 'Nationwide Reach — Abuja to Lagos & Beyond',
-         desc: 'With active talent networks across every Nigerian state, we connect you with the best local and nationally mobile candidates wherever your business operates.',
-       },
-       {
-         icon: '🤝',
-         title: 'Your Trusted Long-Term HR Partner',
-         desc: 'We don\'t just fill roles — we build lasting relationships. Our post-placement support ensures every hire settles in successfully and delivers results from day one.',
-       },
-     ];
-   
-     return (
-       <section className="benefits-section" id="why-jvg">
-         <div className="benefits-headline reveal" ref={el => ref(el, 0)}>
-           <div className="gold-divider" />
-           <div className="section-label center">Why Choose JVG</div>
-           <h2>Abuja's Trusted Partner for Hotels &amp; Businesses<br /><em>That Can't Afford Hiring Mistakes</em></h2>
-           <p>We recruit, screen, and deliver dependable talent — so you never have to compromise on who represents your brand.</p>
-         </div>
-   
-         <div className="benefits-grid">
-           {cards.map((c, i) => (
-             <div
-               key={c.title}
-               className={`benefit-card reveal reveal-d${(i % 3) + 1}`}
-               ref={el => ref(el, i + 1)}
-             >
-               <span className="benefit-card-num">0{i + 1}</span>
-               <div className="benefit-icon-wrap">{c.icon}</div>
-               <h3>{c.title}</h3>
-               <p>{c.desc}</p>
-             </div>
-           ))}
-   
-           {/* Authority proposition strip */}
-           <div className="benefit-proposition reveal" ref={el => ref(el, 7)}>
-             <div className="benefit-proposition-icon">💎</div>
-             <div className="benefit-proposition-text">
-               <strong>Struggling With Unreliable Staff? We Have the Solution.</strong>
-               <span>JVG Recruitment Solutions — Recruit, Screen &amp; Deliver Dependable Talent Across Nigeria. Fast, Professional, Guaranteed.</span>
-             </div>
-           </div>
-         </div>
-       </section>
-     );
-   }
-   
-   /* ══════════════════════════════════════════════════
-      ABOUT PREVIEW (on main page)
-      ══════════════════════════════════════════════════ */
-   function About({ onViewMore }) {
-     const ref = useReveal();
-     const features = [
-       { icon:'🎯', title:'Our Mission',              desc:'To bridge the gap between qualified talent and forward-thinking employers across Nigeria — creating lasting value for businesses and careers alike.' },
-       { icon:'🌍', title:'Our Vision',               desc:"To be Nigeria's most trusted and results-driven recruitment agency — known for integrity, speed, and the quality of every placement we make." },
-       { icon:'⚡', title:'Cross-Industry Expertise', desc:'From finance and engineering to hospitality, sales, and administration — we recruit across all sectors with deep Nigerian market knowledge.' },
-     ];
-     return (
-       <section className="about-section" id="about">
-         <div className="about-grid">
-           <div className="about-visual">
-             <div className="about-visual-icon">🤝</div>
-             <p className="about-visual-text">Connecting talent with opportunity across Nigeria — from Abuja to Lagos and beyond.</p>
-             <div className="about-stat-row">
-               <div className="about-stat-pill"><strong>10+</strong><span>Years Experience</span></div>
-               <div className="about-stat-pill"><strong>500+</strong><span>Placements Made</span></div>
-             </div>
-             <div className="about-float">🏆 Trusted Staffing Agency — Abuja</div>
-           </div>
-   
-           <div className="about-content">
-             <div className="reveal" ref={el => ref(el, 0)}>
-               <div className="section-label">About JVG Recruitment Solutions</div>
-               <h2 className="section-title dark">Your Strategic <em>Recruitment Partner</em> in Nigeria</h2>
-               <p className="section-desc dark">We provide recruitment, staffing, and HR outsourcing solutions — helping businesses find the right match for their workforce needs while supporting job seekers to secure meaningful employment across Abuja, Lagos, Port Harcourt and all Nigerian states.</p>
-             </div>
-             <div className="about-features">
-               {features.map((f, i) => (
-                 <div key={f.title} className={`about-feature reveal reveal-d${i+1}`} ref={el => ref(el, i+1)}>
-                   <div className="about-feature-icon">{f.icon}</div>
-                   <div><h4>{f.title}</h4><p>{f.desc}</p></div>
-                 </div>
-               ))}
-             </div>
-             <div style={{display:'flex', gap:'14px', flexWrap:'wrap'}} className="reveal reveal-d3" ref={el => ref(el, 4)}>
-               <button className="btn-primary" onClick={()=>window.__goToContact&&window.__goToContact()}><span>🚀 Work With Us</span></button>
-               <button className="btn-view-page" onClick={onViewMore}>
-                 <span>📖 Full Story</span>
-                 <span className="btn-view-page-arrow">→</span>
-               </button>
-             </div>
-           </div>
-         </div>
-       </section>
-     );
-   }
-   
-   /* ══════════════════════════════════════════════════
-      ABOUT FULL PAGE
-      ══════════════════════════════════════════════════ */
-   function AboutPage({ onBack }) {
-     useEffect(() => { window.scrollTo(0, 0); }, []);
-     const ref = useReveal();
-   
-     const values = [
-       { icon:'🎯', title:'Our Mission', desc:'To bridge the gap between qualified talent and forward-thinking employers across Nigeria — creating lasting value for businesses and careers alike. We believe every organisation deserves access to exceptional talent, and every professional deserves a meaningful career.' },
-       { icon:'🌍', title:'Our Vision', desc:"To be Nigeria's most trusted and results-driven recruitment agency — known for integrity, speed, and the quality of every placement we make. We envision a Nigeria where talent and opportunity meet seamlessly, driving economic growth and individual fulfilment." },
-       { icon:'⚡', title:'Cross-Industry Expertise', desc:'From finance and engineering to hospitality, sales, and administration — we recruit across all sectors with deep Nigerian market knowledge. Our consultants bring years of industry-specific experience to every search.' },
-       { icon:'💎', title:'Our Values', desc:'Integrity in every interaction. Speed without compromise. Quality that exceeds expectations. We hold ourselves to the highest professional standards because our reputation is built on yours.' },
-       { icon:'🤝', title:'Our Approach', desc:'We take time to understand your culture, your needs, and what success looks like for your organisation. This deep understanding allows us to go beyond matching skills to CVs — we match people to purpose.' },
-       { icon:'🏆', title:'Our Track Record', desc:'With over 500 successful placements across 15+ industries, our results speak for themselves. From front-desk staff to C-suite executives, we have connected thousands of Nigerians with careers that transform their lives.' },
-     ];
-   
-     const team = [
-       { init:'', name:'', role:'Founder & CEO', desc:'' },
-       { init:'', name:'', role:'Head of Recruitment', desc:'' },
-       { init:'', name:'', role:'Client Relations Director', desc:'' },
-     ];
-   
-     return (
-       <div className="full-page">
-         {/* Page Header */}
-         <div className="full-page-hero">
-           <div className="full-page-hero-bg">
-             <div className="hero-orb hero-orb-1" style={{opacity:0.5}} />
-             <div className="hero-orb hero-orb-2" style={{opacity:0.5}} />
-           </div>
-           <div className="full-page-hero-content">
-             <button className="back-btn" onClick={onBack}>
-               ← Back to Home
-             </button>
-             <div className="full-page-eyebrow">
-               <span className="hero-eyebrow-line" />
-               <span>About JVG Recruitment Solutions</span>
-               <span className="hero-eyebrow-dot" />
-             </div>
-             <h1 className="full-page-title">
-               Nigeria's Most Trusted<br />
-               <em>Recruitment Partner</em>
-             </h1>
-             <p className="full-page-subtitle">
-               For over a decade, JVG Recruitment Solutions has been the bridge between exceptional talent and Nigeria's most ambitious organisations — from Abuja to Lagos and every state in between.
-             </p>
-             <div className="full-page-stats">
-               <div className="full-page-stat"><strong>10+</strong><span>Years Experience</span></div>
-               <div className="full-page-stat"><strong>500+</strong><span>Placements Made</span></div>
-               <div className="full-page-stat"><strong>80+</strong><span>Employer Clients</span></div>
-               <div className="full-page-stat"><strong>15+</strong><span>Industries Served</span></div>
-               <div className="full-page-stat"><strong>96%</strong><span>Satisfaction Rate</span></div>
-             </div>
-           </div>
-         </div>
-   
-         {/* Story Section */}
-         <div className="full-page-section" style={{background:'var(--ivory)'}}>
-           <div className="full-page-container">
-             <div className="reveal" ref={el => ref(el, 0)}>
-               <div className="section-label">Our Story</div>
-               <h2 className="section-title dark">Built on <em>Trust &amp; Results</em></h2>
-             </div>
-             <div className="about-story-grid reveal reveal-d1" ref={el => ref(el, 1)}>
-               <div className="about-story-text">
-                 <p>JVG Recruitment Solutions was founded with a singular purpose: to solve Nigeria's talent gap by connecting the right people with the right opportunities. What began as a boutique agency in Abuja has grown into one of Nigeria's most respected recruitment firms, trusted by businesses ranging from ambitious startups to established multinationals.</p>
-                 <p>We saw firsthand how poor hiring decisions were costing Nigerian businesses millions — in lost productivity, high turnover, and wasted training investment. We decided to do something about it.</p>
-                 <p>Today, our rigorous screening process, vast talent network, and deep industry knowledge mean we deliver candidates who don't just fill roles — they transform organisations. We are proud partners to businesses across every Nigerian state, and we take that responsibility seriously.</p>
-               </div>
-               <div className="about-story-visual">
-                 <div className="about-story-card">
-                   <div className="about-story-card-icon">🌟</div>
-                   <h3>Founded in Abuja</h3>
-                   <p>With a mission to redefine talent acquisition across Nigeria</p>
-                 </div>
-                 <div className="about-story-card">
-                   <div className="about-story-card-icon">📈</div>
-                   <h3>Nationwide Growth</h3>
-                   <p>Expanded to serve clients in every state across the federation</p>
-                 </div>
-                 <div className="about-story-card">
-                   <div className="about-story-card-icon">🤝</div>
-                   <h3>Lasting Partnerships</h3>
-                   <p>80% of our clients are returning partners — testament to our results</p>
-                 </div>
-               </div>
-             </div>
-           </div>
-         </div>
-   
-         {/* Values Grid */}
-         <div className="full-page-section" style={{background:'var(--navy-deep)'}}>
-           <div className="full-page-container">
-             <div className="reveal" ref={el => ref(el, 10)}>
-               <div className="section-label center" style={{display:'flex',justifyContent:'center'}}>What Drives Us</div>
-               <h2 className="section-title" style={{textAlign:'center',color:'var(--ivory)'}}>Our Mission, <em>Vision &amp; Values</em></h2>
-             </div>
-             <div className="about-values-grid">
-               {values.map((v, i) => (
-                 <div key={v.title} className={`about-value-card reveal reveal-d${(i%3)+1}`} ref={el => ref(el, 11+i)}>
-                   <div className="about-value-icon">{v.icon}</div>
-                   <h3>{v.title}</h3>
-                   <p>{v.desc}</p>
-                 </div>
-               ))}
-             </div>
-           </div>
-         </div>
-   
-         {/* Team Section */}
-         <div className="full-page-section" style={{background:'var(--ivory)'}}>
-           <div className="full-page-container">
-             <div className="reveal" ref={el => ref(el, 20)}>
-               <div className="section-label center" style={{display:'flex',justifyContent:'center'}}>The People Behind JVG</div>
-               <h2 className="section-title dark" style={{textAlign:'center'}}>Meet Our <em>Leadership Team</em></h2>
-             </div>
-             <div className="about-team-grid">
-               {team.map((t, i) => (
-                 <div key={t.name} className={`about-team-card reveal reveal-d${i+1}`} ref={el => ref(el, 21+i)}>
-                   <div className="about-team-avatar">{t.init}</div>
-                   <h3>{t.name}</h3>
-                   <div className="about-team-role">{t.role}</div>
-                   <p>{t.desc}</p>
-                 </div>
-               ))}
-             </div>
-           </div>
-         </div>
-   
-         {/* CTA */}
-         <div className="full-page-cta">
-           <div className="full-page-container" style={{textAlign:'center'}}>
-             <h2 style={{fontFamily:'var(--font-display)', fontSize:'clamp(1.8rem,3.5vw,2.8rem)', color:'var(--ivory)', marginBottom:'16px'}}>Ready to Partner With <em style={{color:'var(--gold-mid)'}}>Nigeria's Best?</em></h2>
-             <p style={{color:'rgba(255,255,255,.5)', marginBottom:'36px', fontSize:'16px'}}>Let's discuss how JVG can transform your hiring — or your career.</p>
-             <div style={{display:'flex', gap:'16px', justifyContent:'center', flexWrap:'wrap'}}>
-               <button className="btn-primary" onClick={onBack}><span>← Back to Home</span></button>
-               <button className="btn-secondary" onClick={()=>window.__goToContact&&window.__goToContact()}><span>📋 Get In Touch</span></button>
-             </div>
-           </div>
-         </div>
-       </div>
-     );
-   }
-   
-   /* ══════════════════════════════════════════════════
-      SERVICES
-      ══════════════════════════════════════════════════ */
-   function Services() {
-     const ref = useReveal();
-     const services = [
-       {
-         num:'01', icon:'👥', title:'Recruitment & Staffing',
-         desc:'We source, screen, and deliver qualified candidates tailored precisely to your role requirements — from entry-level to C-suite positions across Nigeria.',
-         items:['Permanent & contract placements','Executive search & headhunting','Volume recruitment campaigns','Hotel & hospitality staffing'],
-       },
-       {
-         num:'02', icon:'🏢', title:'HR Outsourcing',
-         desc:"Let us manage your HR functions so you can focus on growth. From sourcing to onboarding — we handle it all with professionalism and discretion.",
-         items:['Candidate sourcing & rigorous screening','Interview coordination & logistics','Onboarding process management','Background verification & reference checks'],
-       },
-       {
-         num:'03', icon:'🎓', title:'Job Placement for Candidates',
-         desc:'We support job seekers throughout the entire employment journey — from CV optimisation to interview coaching and successful placement follow-up.',
-         items:['Professional CV review & optimisation','Job matching & direct application support','Interview preparation & confidence coaching','Post-placement follow-up & career guidance'],
-       },
-     ];
-     return (
-       <section className="services-section" id="services">
-         <div className="section-header center reveal" ref={el => ref(el, 0)} style={{position:'relative',zIndex:1}}>
-           <div className="section-label center">What We Offer</div>
-           <h2 className="section-title">Our <em>Recruitment Services</em></h2>
-           <p className="section-desc">End-to-end talent acquisition and HR outsourcing solutions designed to help your business thrive across Nigeria.</p>
-         </div>
-         <div className="services-grid">
-           {services.map((s, i) => (
-             <div key={s.num} className={`service-card reveal reveal-d${i+1}`} ref={el => ref(el, i+1)}>
-               <span className="service-num">{s.num}</span>
-               <div className="service-icon-wrap">{s.icon}</div>
-               <h3>{s.title}</h3>
-               <p>{s.desc}</p>
-               <ul className="service-list">{s.items.map(it => <li key={it}>{it}</li>)}</ul>
-             </div>
-           ))}
-         </div>
-       </section>
-     );
-   }
-   
-   /* ══════════════════════════════════════════════════
-      HOW IT WORKS
-      ══════════════════════════════════════════════════ */
-   function HowItWorks() {
-     const [tab, setTab] = useState('employers');
-     const ref = useReveal();
-     const employer = [
-       { n:'01', e:'📋', t:'Post Your Requirement', d:'Share your role specifications, team culture, and the ideal candidate profile with our experienced consultants.' },
-       { n:'02', e:'🔍', t:'We Source & Screen',     d:'We search our extensive talent pool and networks to identify, verify, and shortlist only the best-fit candidates.' },
-       { n:'03', e:'📅', t:'Interview Coordination', d:'We manage the full interview process — scheduling, candidate briefing, logistics, and collecting your feedback.' },
-       { n:'04', e:'🎉', t:'Successful Placement',   d:'We facilitate the offer, onboarding, and follow up to ensure a seamless and lasting hire for your organisation.' },
-     ];
-     const seeker = [
-       { n:'01', e:'✍️', t:'Register With Us',  d:'Submit your profile and CV. Share your experience, core skills, salary expectations, and career goals with our team.' },
-       { n:'02', e:'👀', t:'Browse Openings',   d:'Explore our active vacancies and get matched to roles aligned with your skills, experience, and career aspirations.' },
-       { n:'03', e:'📤', t:'Apply With Ease',   d:"We advocate directly for you with our employer clients — ensuring your application receives the attention it deserves." },
-       { n:'04', e:'🌟', t:'Full Journey Support', d:"We guide you through interviews, offer negotiations, and onboarding — until you're fully settled in your new role." },
-     ];
-     const steps = tab === 'employers' ? employer : seeker;
-     return (
-       <section className="how-section" id="how-it-works">
-         <div className="section-header center reveal" ref={el => ref(el, 0)}>
-           <div className="section-label center">Simple & Proven Process</div>
-           <h2 className="section-title dark">How <em>It Works</em></h2>
-           <p className="section-desc dark">Whether you're hiring or job hunting — our streamlined process delivers results with speed and precision.</p>
-         </div>
-         <div className="how-tabs">
-           <button className={`how-tab${tab==='employers'?' active':''}`} onClick={() => setTab('employers')}>For Employers</button>
-           <button className={`how-tab${tab==='seekers'?' active':''}`}   onClick={() => setTab('seekers')}>For Job Seekers</button>
-         </div>
-         <div className="how-steps">
-           {steps.map(s => (
-             <div key={s.n} className="how-step">
-               <div className="how-bubble">
-                 <span className="how-num">{s.n}</span>
-                 <span className="how-emoji">{s.e}</span>
-               </div>
-               <h4>{s.t}</h4>
-               <p>{s.d}</p>
-             </div>
-           ))}
-         </div>
-       </section>
-     );
-   }
-   
-   /* ══════════════════════════════════════════════════
-      CV UPLOAD
-      ══════════════════════════════════════════════════ */
-   function CvUpload({ cvFile, setCvFile, required }) {
-     const [dragOver, setDragOver] = useState(false);
-     const inputRef = useRef(null);
-   
-     const handleFile = (file) => {
-       if (!file) return;
-       const allowed = ['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-       if (!allowed.includes(file.type)) { alert('Please upload a PDF or Word document (.pdf, .doc, .docx)'); return; }
-       if (file.size > 5 * 1024 * 1024) { alert('File size must be under 5MB.'); return; }
-       setCvFile(file);
-     };
-     const onDrop = (e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0]); };
-     const formatSize = (bytes) => {
-       if (bytes < 1024) return `${bytes} B`;
-       if (bytes < 1024*1024) return `${(bytes/1024).toFixed(1)} KB`;
-       return `${(bytes/(1024*1024)).toFixed(1)} MB`;
-     };
-   
-     return (
-       <div
-         className={`cv-upload-zone${cvFile?' has-file':''}${dragOver?' drag-over':''}`}
-         onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-         onDragLeave={() => setDragOver(false)}
-         onDrop={onDrop}
-         onClick={() => !cvFile && inputRef.current?.click()}
-       >
-         <input ref={inputRef} type="file" accept=".pdf,.doc,.docx" onChange={e => handleFile(e.target.files[0])} style={{display:'none'}} />
-         {cvFile ? (
-           <>
-             <div className="cv-upload-icon">✅</div>
-             <div className="cv-file-name">
-               📄 {cvFile.name}
-               <button type="button" className="cv-remove-btn"
-                 onClick={e => { e.stopPropagation(); setCvFile(null); if(inputRef.current) inputRef.current.value=''; }}
-                 title="Remove">✕</button>
-             </div>
-             <div className="cv-file-size">{formatSize(cvFile.size)} — ready to submit</div>
-           </>
-         ) : (
-           <>
-             <div className="cv-upload-icon">📎</div>
-             <div className="cv-upload-title">{required ? 'Attach Your CV / Resume (Required)' : 'Attach Your CV / Resume'}</div>
-             <div className="cv-upload-sub">Click to browse or drag & drop your file here</div>
-             <div className="cv-upload-types">Accepted: PDF, DOC, DOCX · Max 5MB</div>
-             {!required && <div className="cv-upload-note">Optional — skip if not applicable</div>}
-           </>
-         )}
-       </div>
-     );
-   }
-   
-   /* ══════════════════════════════════════════════════
-      ADMIN PANEL
-      ══════════════════════════════════════════════════ */
-   function AdminPanel({ jobs, setJobs, onClose }) {
-     const [authed,      setAuthed]      = useState(false);
-     const [password,    setPassword]    = useState('');
-     const [loginErr,    setLoginErr]    = useState('');
-     const [adminTab,    setAdminTab]    = useState('enquiries');
-     const [editJob,     setEditJob]     = useState(null);
-     const [notice,      setNotice]      = useState('');
-     const [noticeErr,   setNoticeErr]   = useState(false);
-     const [enquiries,   setEnquiries]   = useState(loadEnquiries);
-     const [expanded,    setExpanded]    = useState(null);
-     const [search,      setSearch]      = useState('');
-     const [emailSearch, setEmailSearch] = useState('');
-     const [copied,      setCopied]      = useState('');
-     const [emailFilter, setEmailFilter] = useState('all');
-   
-     const blankForm = { icon:'💼', badge:'full-time', title:'', location:'', industry:'', salary:'', description:'' };
-     const [form, setForm] = useState(blankForm);
-   
-     const showNotice = (msg, err=false) => {
-       setNotice(msg); setNoticeErr(err);
-       setTimeout(() => setNotice(''), 3500);
-     };
-   
-     const markRead = id => { const u = enquiries.map(e => e.id===id?{...e,read:true}:e); setEnquiries(u); saveEnquiries(u); };
-     const deleteEnquiry = id => {
-       if (!window.confirm('Delete this enquiry?')) return;
-       const u = enquiries.filter(e => e.id!==id); setEnquiries(u); saveEnquiries(u);
-       if (expanded===id) setExpanded(null); showNotice('Enquiry deleted.');
-     };
-     const clearAllEnquiries = () => {
-       if (!window.confirm('Clear ALL enquiries? This cannot be undone.')) return;
-       setEnquiries([]); saveEnquiries([]); setExpanded(null); showNotice('All enquiries cleared.');
-     };
-     const toggleExpand = id => { setExpanded(prev => prev===id?null:id); markRead(id); };
-     const formatDate = iso => {
-       const d = new Date(iso);
-       return d.toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('en-NG',{hour:'2-digit',minute:'2-digit'});
-     };
-   
-     const unreadCount = enquiries.filter(e => !e.read).length;
-     const filteredEnquiries = enquiries.filter(e => {
-       const q = search.toLowerCase();
-       return !q || (e.email||'').toLowerCase().includes(q) || `${e.firstName} ${e.lastName}`.toLowerCase().includes(q) || (e.subject||'').toLowerCase().includes(q);
-     });
-   
-     const employerEmails = [...new Set(enquiries.filter(e=>e.role==='Employer / Hiring Manager').map(e=>e.email).filter(Boolean))];
-     const hrEmails       = [...new Set(enquiries.filter(e=>e.role==='HR Professional').map(e=>e.email).filter(Boolean))];
-     const allEmails      = [...new Set([...employerEmails,...hrEmails])];
-   
-     const copyEmails = (type) => {
-       const list = type==='employer' ? employerEmails : type==='hr' ? hrEmails : allEmails;
-       if (!list.length) return;
-       navigator.clipboard.writeText(list.join(', ')).catch(()=>{
-         const ta = document.createElement('textarea'); ta.value=list.join(', '); document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-       });
-       setCopied(type); setTimeout(()=>setCopied(''),2500);
-     };
-   
-     const downloadCSV = (type) => {
-       const source = type==='employer' ? enquiries.filter(e=>e.role==='Employer / Hiring Manager')
-         : type==='hr' ? enquiries.filter(e=>e.role==='HR Professional')
-         : enquiries.filter(e=>e.role==='Employer / Hiring Manager'||e.role==='HR Professional');
-       if (!source.length) { showNotice('No records to download.',true); return; }
-       const headers = ['First Name','Last Name','Email','Phone','Role','Subject','Message','Date'];
-       const rows = source.map(e=>[`"${(e.firstName||'').replace(/"/g,'""')}"`,`"${(e.lastName||'').replace(/"/g,'""')}"`,`"${(e.email||'').replace(/"/g,'""')}"`,`"${(e.phone||'').replace(/"/g,'""')}"`,`"${(e.role||'').replace(/"/g,'""')}"`,`"${(e.subject||'').replace(/"/g,'""')}"`,`"${(e.message||'').replace(/"/g,'""').replace(/\n/g,' ')}"`,`"${formatDate(e.timestamp)}"`].join(','));
-       const csv = [headers.join(','),...rows].join('\n');
-       const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
-       const url = URL.createObjectURL(blob);
-       const a = document.createElement('a'); a.href=url; a.download=`jvg-${type}-emails-${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
-       showNotice('CSV downloaded!');
-     };
-   
-     const toggleJob = id => { const u=jobs.map(j=>j.id===id?{...j,active:!j.active}:j); setJobs(u); saveJobs(u); showNotice('Job visibility updated.'); };
-     const deleteJob = id => { if(!window.confirm('Delete this job posting?')) return; const u=jobs.filter(j=>j.id!==id); setJobs(u); saveJobs(u); showNotice('Job deleted.'); };
-     const openEdit  = job => { setEditJob(job.id); setForm({icon:job.icon,badge:job.badge,title:job.title,location:job.location,industry:job.industry,salary:job.salary,description:job.description||''}); setAdminTab('edit'); };
-     const openAdd   = () => { setEditJob(null); setForm(blankForm); setAdminTab('add'); };
-     const saveJob   = e => {
-       e.preventDefault();
-       if (!form.title.trim()||!form.location.trim()||!form.salary.trim()) { showNotice('Please fill in Title, Location and Salary.',true); return; }
-       let u;
-       if (editJob!==null) { u=jobs.map(j=>j.id===editJob?{...j,...form}:j); showNotice('Job updated!'); }
-       else { u=[...jobs,{...form,id:Date.now(),active:true}]; showNotice('New job added!'); }
-       setJobs(u); saveJobs(u); setAdminTab('list'); setForm(blankForm); setEditJob(null);
-     };
-   
-     const getDisplayEmails = () => {
-       const pool = emailFilter==='employer'?employerEmails:emailFilter==='hr'?hrEmails:allEmails;
-       const q = emailSearch.trim().toLowerCase();
-       return q ? pool.filter(em=>em.toLowerCase().includes(q)) : pool;
-     };
-     const displayEmails = getDisplayEmails();
-     const activeCount = jobs.filter(j=>j.active).length;
-   
-     if (!authed) return (
-       <div className="admin-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
-         <div className="admin-panel">
-           <div className="admin-header">
-             <div><h2>🔐 Admin Access</h2><p>JVG Recruitment Solutions — Admin Panel</p></div>
-             <button className="admin-close-btn" onClick={onClose}>✕</button>
-           </div>
-           <div className="admin-login">
-             <h3>Administrator Login</h3>
-             <p>Enter your admin password to manage job postings and view employer enquiries.</p>
-             <form className="admin-login-form" onSubmit={e=>{e.preventDefault();password===ADMIN_PASSWORD?(setAuthed(true),setLoginErr('')):setLoginErr('Incorrect password. Please try again.');}}>
-               {loginErr && <div className="admin-login-error">⚠️ {loginErr}</div>}
-               <div className="form-group">
-                 <label>Password</label>
-                 <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Enter admin password" autoFocus />
-               </div>
-               <button type="submit" className="btn-save" style={{width:'100%',justifyContent:'center'}}>🔓 Login</button>
-               <div className="admin-login-hint">🔒 Authorised personnel only. For access issues, contact your system administrator.</div>
-             </form>
-           </div>
-         </div>
-       </div>
-     );
-   
-     return (
-       <div className="admin-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
-         <div className="admin-panel">
-           <div className="admin-header">
-             <div><h2>⚙️ Admin Panel</h2><p>Manage job postings and employer & HR enquiries.</p></div>
-             <button className="admin-close-btn" onClick={onClose}>✕</button>
-           </div>
-           <div className="admin-body">
-             {notice && <div className={`admin-notice${noticeErr?' error':''}`}>{noticeErr?'⚠️':'✅'} {notice}</div>}
-   
-             <div className="admin-stats">
-               <div className="admin-stat-card"><strong>{enquiries.filter(e=>e.role==='Employer / Hiring Manager').length}</strong><span>Employer Enquiries</span></div>
-               <div className="admin-stat-card"><strong>{enquiries.filter(e=>e.role==='HR Professional').length}</strong><span>HR Enquiries</span></div>
-               <div className="admin-stat-card" style={unreadCount>0?{borderColor:'var(--gold)',background:'rgba(200,160,80,.06)'}:{}}>
-                 <strong style={unreadCount>0?{color:'var(--gold)'}:{}}>{unreadCount}</strong><span>Unread</span>
-               </div>
-               <div className="admin-stat-card"><strong>{activeCount}</strong><span>Active Jobs</span></div>
-             </div>
-   
-             <div className="admin-tabs">
-               <button className={`admin-tab${adminTab==='enquiries'?' active':''}`} onClick={()=>setAdminTab('enquiries')}>
-                 📬 All Enquiries {unreadCount>0&&<span className="enq-badge">{unreadCount}</span>}
-               </button>
-               <button className={`admin-tab${adminTab==='emails'?' active':''}`} onClick={()=>setAdminTab('emails')}>
-                 📧 Email Lists {allEmails.length>0&&<span className="enq-badge" style={{background:'var(--gold)',color:'var(--navy)'}}>{allEmails.length}</span>}
-               </button>
-               <button className={`admin-tab${adminTab==='list'?' active':''}`} onClick={()=>setAdminTab('list')}>📋 Job Listings</button>
-               <button className={`admin-tab${adminTab==='add'||adminTab==='edit'?' active':''}`} onClick={openAdd}>
-                 {adminTab==='edit'?'✏️ Editing Job':'➕ Add New Job'}
-               </button>
-             </div>
-   
-             {adminTab==='enquiries' && (
-               <div className="enq-panel">
-                 <div className="enq-toolbar">
-                   <div className="enq-search-wrap">
-                     <span className="enq-search-icon">🔍</span>
-                     <input className="enq-search" type="text" placeholder="Search by name, email or subject…" value={search} onChange={e=>setSearch(e.target.value)} />
-                     {search&&<button className="enq-search-clear" onClick={()=>setSearch('')}>✕</button>}
-                   </div>
-                   {enquiries.length>0&&<button className="enq-clear-all" onClick={clearAllEnquiries}>🗑️ Clear All</button>}
-                 </div>
-                 {filteredEnquiries.length===0&&(
-                   <div className="enq-empty">
-                     <div className="enq-empty-icon">{search?'🔍':'📭'}</div>
-                     <p>{search?'No enquiries match your search.':'No enquiries yet.'}</p>
-                     <span>{search?'Try a different search term.':'Employer and HR enquiries from the contact form will appear here.'}</span>
-                   </div>
-                 )}
-                 <div className="enq-list">
-                   {filteredEnquiries.map(enq=>(
-                     <div key={enq.id} className={`enq-card${!enq.read?' enq-unread':''}${expanded===enq.id?' enq-expanded':''}`}>
-                       <div className="enq-card-header" onClick={()=>toggleExpand(enq.id)}>
-                         <div className="enq-avatar">{enq.firstName?.[0]?.toUpperCase()}{enq.lastName?.[0]?.toUpperCase()}</div>
-                         <div className="enq-card-info">
-                           <div className="enq-name">
-                             {enq.firstName} {enq.lastName}
-                             {!enq.read&&<span className="enq-new-dot" title="New">●</span>}
-                             {enq.role&&<span className={`enq-role-tag ${enq.role==='HR Professional'?'enq-role-hr':'enq-role-employer'}`}>{enq.role==='HR Professional'?'🧑‍💼 HR':'🏢 Employer'}</span>}
-                           </div>
-                           <div className="enq-email-preview">📧 {enq.email}</div>
-                           <div className="enq-meta-row">
-                             <span className="enq-subject">📌 {enq.subject||'(no subject)'}</span>
-                             <span className="enq-date">🕐 {formatDate(enq.timestamp)}</span>
-                           </div>
-                         </div>
-                         <div className="enq-chevron">{expanded===enq.id?'▲':'▼'}</div>
-                       </div>
-                       {expanded===enq.id&&(
-                         <div className="enq-card-body">
-                           <div className="enq-detail-grid">
-                             <div className="enq-detail-row"><span className="enq-detail-label">Full Name</span><span className="enq-detail-value">{enq.firstName} {enq.lastName}</span></div>
-                             <div className="enq-detail-row"><span className="enq-detail-label">Email</span><span className="enq-detail-value"><a href={`mailto:${enq.email}`} className="enq-email-link">{enq.email}</a></span></div>
-                             {enq.phone&&<div className="enq-detail-row"><span className="enq-detail-label">Phone</span><span className="enq-detail-value"><a href={`tel:${enq.phone}`} className="enq-email-link">{enq.phone}</a></span></div>}
-                             {enq.role&&<div className="enq-detail-row"><span className="enq-detail-label">Role</span><span className="enq-detail-value">{enq.role}</span></div>}
-                             {enq.cvFileName&&<div className="enq-detail-row"><span className="enq-detail-label">CV Attached</span><span className="enq-detail-value">📄 {enq.cvFileName} ({enq.cvFileSize})</span></div>}
-                             <div className="enq-detail-row"><span className="enq-detail-label">Subject</span><span className="enq-detail-value">{enq.subject||'—'}</span></div>
-                             <div className="enq-detail-row enq-detail-full"><span className="enq-detail-label">Message</span><div className="enq-message-box">{enq.message}</div></div>
-                             <div className="enq-detail-row"><span className="enq-detail-label">Submitted</span><span className="enq-detail-value">{formatDate(enq.timestamp)}</span></div>
-                           </div>
-                           <div className="enq-card-actions">
-                             <a href={`mailto:${enq.email}?subject=Re: ${encodeURIComponent(enq.subject||'')}`} className="btn-reply">✉️ Reply by Email</a>
-                             {enq.phone&&<a href={`https://wa.me/${enq.phone.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">💬 WhatsApp</a>}
-                             <button className="btn-icon delete" title="Delete" onClick={()=>deleteEnquiry(enq.id)}>🗑️</button>
-                           </div>
-                         </div>
-                       )}
-                     </div>
-                   ))}
-                 </div>
-               </div>
-             )}
-   
-             {adminTab==='emails'&&(
-               <div className="email-lists-panel">
-                 <div className="email-summary-row">
-                   <div className={`email-summary-card${emailFilter==='employer'?' active':''}`} onClick={()=>setEmailFilter('employer')}><span className="email-summary-icon">🏢</span><strong>{employerEmails.length}</strong><span>Employer Emails</span></div>
-                   <div className={`email-summary-card${emailFilter==='hr'?' active':''}`} onClick={()=>setEmailFilter('hr')}><span className="email-summary-icon">🧑‍💼</span><strong>{hrEmails.length}</strong><span>HR Professional Emails</span></div>
-                   <div className={`email-summary-card${emailFilter==='all'?' active':''}`} onClick={()=>setEmailFilter('all')}><span className="email-summary-icon">📋</span><strong>{allEmails.length}</strong><span>All Combined</span></div>
-                 </div>
-                 <div className="enq-search-wrap" style={{marginBottom:'14px'}}>
-                   <span className="enq-search-icon">🔍</span>
-                   <input className="enq-search" type="text" placeholder={`Search ${emailFilter==='all'?'all':emailFilter} emails…`} value={emailSearch} onChange={e=>setEmailSearch(e.target.value)} />
-                   {emailSearch&&<button className="enq-search-clear" onClick={()=>setEmailSearch('')}>✕</button>}
-                 </div>
-                 {(emailFilter==='employer'||emailFilter==='all')&&(
-                   <div className="email-group">
-                     <div className="email-group-header">
-                       <div className="email-group-title"><span>🏢</span><strong>Employer / Hiring Managers</strong><span className="email-count-badge">{employerEmails.length} email{employerEmails.length!==1?'s':''}</span></div>
-                       {employerEmails.length>0&&<div className="email-group-actions">
-                         <button className="btn-email-action copy" onClick={()=>copyEmails('employer')}>{copied==='employer'?'✅ Copied!':'📋 Copy'}</button>
-                         <button className="btn-email-action download" onClick={()=>downloadCSV('employer')}>⬇️ CSV</button>
-                         <a href={`mailto:?bcc=${employerEmails.join(',')}&subject=Update from JVG Recruitment Solutions`} className="btn-email-action mailto">✉️ Email All</a>
-                       </div>}
-                     </div>
-                     {employerEmails.length===0?<div className="email-empty">📭 No employer emails yet.</div>:(
-                       <div className="email-chip-list">
-                         {(emailSearch?employerEmails.filter(em=>em.toLowerCase().includes(emailSearch.toLowerCase())):employerEmails).map(em=>(
-                           <div key={em} className="email-chip employer-chip"><span className="email-chip-dot"/>{em}<button className="email-chip-copy" title="Copy" onClick={()=>{navigator.clipboard.writeText(em).catch(()=>{});showNotice(`Copied: ${em}`);}}>📋</button></div>
-                         ))}
-                       </div>
-                     )}
-                   </div>
-                 )}
-                 {(emailFilter==='hr'||emailFilter==='all')&&(
-                   <div className="email-group" style={{marginTop:emailFilter==='all'?'18px':'0'}}>
-                     <div className="email-group-header">
-                       <div className="email-group-title"><span>🧑‍💼</span><strong>HR Professionals</strong><span className="email-count-badge" style={{background:'rgba(168,85,247,.12)',color:'#A855F7',borderColor:'rgba(168,85,247,.25)'}}>{hrEmails.length} email{hrEmails.length!==1?'s':''}</span></div>
-                       {hrEmails.length>0&&<div className="email-group-actions">
-                         <button className="btn-email-action copy" onClick={()=>copyEmails('hr')}>{copied==='hr'?'✅ Copied!':'📋 Copy'}</button>
-                         <button className="btn-email-action download" onClick={()=>downloadCSV('hr')}>⬇️ CSV</button>
-                         <a href={`mailto:?bcc=${hrEmails.join(',')}&subject=Update from JVG Recruitment Solutions`} className="btn-email-action mailto">✉️ Email All</a>
-                       </div>}
-                     </div>
-                     {hrEmails.length===0?<div className="email-empty">📭 No HR professional emails yet.</div>:(
-                       <div className="email-chip-list">
-                         {(emailSearch?hrEmails.filter(em=>em.toLowerCase().includes(emailSearch.toLowerCase())):hrEmails).map(em=>(
-                           <div key={em} className="email-chip hr-chip"><span className="email-chip-dot" style={{background:'#A855F7'}}/>{em}<button className="email-chip-copy" title="Copy" onClick={()=>{navigator.clipboard.writeText(em).catch(()=>{});showNotice(`Copied: ${em}`);}}>📋</button></div>
-                         ))}
-                       </div>
-                     )}
-                   </div>
-                 )}
-                 {emailFilter==='all'&&allEmails.length>0&&(
-                   <div className="email-combined-actions">
-                     <div className="email-combined-label">⚡ Combined Actions (All {allEmails.length} emails)</div>
-                     <div style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
-                       <button className="btn-email-action copy" style={{padding:'10px 18px'}} onClick={()=>copyEmails('all')}>{copied==='all'?'✅ Copied All!':'📋 Copy All'}</button>
-                       <button className="btn-email-action download" style={{padding:'10px 18px'}} onClick={()=>downloadCSV('all')}>⬇️ Full CSV</button>
-                       <a href={`mailto:?bcc=${allEmails.join(',')}&subject=Update from JVG Recruitment Solutions`} className="btn-email-action mailto" style={{padding:'10px 18px'}}>✉️ Email Everyone</a>
-                     </div>
-                   </div>
-                 )}
-                 {allEmails.length===0&&<div className="enq-empty" style={{marginTop:'20px'}}><div className="enq-empty-icon">📭</div><p>No emails collected yet.</p><span>Employer and HR emails from the contact form will appear here.</span></div>}
-               </div>
-             )}
-   
-             {adminTab==='list'&&(
-               <>
-                 <div className="admin-job-list">
-                   {jobs.length===0&&<div style={{textAlign:'center',padding:'32px',color:'var(--grey-mid)'}}>No jobs yet. Click "Add New Job" to get started.</div>}
-                   {jobs.map(job=>(
-                     <div key={job.id} className="admin-job-row" style={{opacity:job.active?1:0.5}}>
-                       <div className="admin-job-row-icon">{job.icon}</div>
-                       <div className="admin-job-row-info">
-                         <div className="admin-job-row-title">{job.title}</div>
-                         <div className="admin-job-row-meta">📍 {job.location} · 🏢 {job.industry} · 💰 {job.salary} · <span className={`job-badge ${job.badge}`} style={{fontSize:'10px'}}>{job.badge}</span> · {job.active?<span style={{color:'var(--green)',fontWeight:700}}>● Visible</span>:<span style={{color:'var(--grey-mid)',fontWeight:700}}>● Hidden</span>}</div>
-                       </div>
-                       <div className="admin-job-row-actions">
-                         <button className={`btn-icon toggle${!job.active?' off':''}`} title={job.active?'Hide':'Show'} onClick={()=>toggleJob(job.id)}>{job.active?'👁️':'🙈'}</button>
-                         <button className="btn-icon edit" title="Edit" onClick={()=>openEdit(job)}>✏️</button>
-                         <button className="btn-icon delete" title="Delete" onClick={()=>deleteJob(job.id)}>🗑️</button>
-                       </div>
-                     </div>
-                   ))}
-                 </div>
-                 <button className="btn-add-job" onClick={openAdd}>➕ Add New Job Posting</button>
-               </>
-             )}
-   
-             {(adminTab==='add'||adminTab==='edit')&&(
-               <form className="job-form" onSubmit={saveJob}>
-                 <h4>{adminTab==='edit'?'✏️ Edit Job Posting':'➕ Add New Job Posting'}</h4>
-                 <div className="form-grid">
-                   <div className="form-group"><label>Icon</label><select value={form.icon} onChange={e=>setForm({...form,icon:e.target.value})}>{ICON_OPTIONS.map(ico=><option key={ico} value={ico}>{ico} {ico}</option>)}</select></div>
-                   <div className="form-group"><label>Job Type</label><select value={form.badge} onChange={e=>setForm({...form,badge:e.target.value})}>{BADGE_OPTIONS.map(b=><option key={b.value} value={b.value}>{b.label}</option>)}</select></div>
-                   <div className="form-group full"><label>Job Title *</label><input type="text" placeholder="e.g. Senior Accountant" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} required /></div>
-                   <div className="form-group"><label>Location *</label><input type="text" placeholder="e.g. Abuja, FCT" value={form.location} onChange={e=>setForm({...form,location:e.target.value})} required /></div>
-                   <div className="form-group"><label>Industry / Department</label><input type="text" placeholder="e.g. Finance / Banking" value={form.industry} onChange={e=>setForm({...form,industry:e.target.value})} /></div>
-                   <div className="form-group full">
-                     <label>Salary / Compensation *</label>
-                     <div className="salary-input-wrap">
-                       <span className="salary-prefix">₦</span>
-                       <input
-                         type="text"
-                         className="salary-input"
-                         placeholder="e.g. 150,000 – 220,000/mo"
-                         value={form.salary.replace(/^₦\s*/,'')}
-                         onChange={e=>setForm({...form,salary:'₦'+e.target.value})}
-                         required
-                       />
-                     </div>
-                   </div>
-                   <div className="form-group full"><label>Job Description</label><textarea placeholder="Brief description of the role and responsibilities..." value={form.description} onChange={e=>setForm({...form,description:e.target.value})} /></div>
-                 </div>
-                 <div className="form-actions">
-                   <button type="submit" className="btn-save">💾 {adminTab==='edit'?'Save Changes':'Add Job'}</button>
-                   <button type="button" className="btn-cancel" onClick={()=>{setAdminTab('list');setForm(blankForm);setEditJob(null);}}>Cancel</button>
-                   {adminTab==='edit'&&<button type="button" className="btn-icon delete" style={{width:'auto',padding:'0 14px',borderRadius:'var(--r-xs)',fontSize:'13px',gap:'6px',display:'flex',alignItems:'center'}} onClick={()=>{deleteJob(editJob);setAdminTab('list');}}>🗑️ Delete</button>}
-                 </div>
-               </form>
-             )}
-           </div>
-         </div>
-       </div>
-     );
-   }
-   
-   /* ══════════════════════════════════════════════════
-      JOBS PREVIEW (on main page)
-      ══════════════════════════════════════════════════ */
-   function Jobs({ jobs, onViewAll }) {
-     const ref = useReveal();
-     const visible = jobs.filter(j => j.active);
-     const preview = visible.slice(0, 3);
-     const scroll = () => window.__goToContact&&window.__goToContact();
-   
-     return (
-       <section className="jobs-section" id="jobs" style={{position:'relative'}}>
-         <div className="section-header reveal" ref={el => ref(el, 0)} style={{position:'relative',zIndex:1}}>
-           <div className="section-label">Live Opportunities</div>
-           <h2 className="section-title">Featured <em>Job Openings</em></h2>
-           <p className="section-desc">Explore our current vacancies across Nigeria. New roles added regularly — follow us on Facebook for instant alerts.</p>
-         </div>
-         <div className="jobs-grid" style={{position:'relative',zIndex:1}}>
-           {preview.length===0?(
-             <div className="jobs-empty">
-               <div className="jobs-empty-icon">🔍</div>
-               <p style={{color:'rgba(255,255,255,.5)',fontSize:'16px'}}>No openings at the moment. Check back soon or follow us on Facebook.</p>
-             </div>
-           ):preview.map((job,i)=>(
-             <div key={job.id} className={`job-card reveal reveal-d${(i%3)+1}`} ref={el=>ref(el,i+1)}>
-               <div className="job-card-top">
-                 <div className="job-icon">{job.icon}</div>
-                 <span className={`job-badge ${job.badge}`}>{BADGE_OPTIONS.find(b=>b.value===job.badge)?.label||job.badge}</span>
-               </div>
-               <div className="job-title">{job.title}</div>
-               <div className="job-meta">
-                 <span className="job-meta-item">📍 {job.location}</span>
-                 <span className="job-meta-item">🏢 {job.industry}</span>
-               </div>
-               {job.description&&<div className="job-desc-text">{job.description}</div>}
-               <div className="job-salary">{job.salary}</div>
-               <button className="job-apply-btn" onClick={scroll}>Apply Now →</button>
-             </div>
-           ))}
-         </div>
+// ── ADMIN CREDENTIALS ────────────────────────────────────────
+const ADMIN_PASSWORD = 'jvgadmin862';
 
-         {/* View All Jobs CTA */}
-         <div className="jobs-view-all-cta reveal" ref={el=>ref(el,4)} style={{position:'relative',zIndex:1}}>
-           <div className="jobs-view-all-inner">
-             <div className="jobs-view-all-text">
-               <div className="jobs-view-all-count">
-                 <span className="jobs-count-num">{visible.length}</span>
-                 <span className="jobs-count-label">Active Openings</span>
-               </div>
-               <div>
-                 <h3>See All Available Positions</h3>
-                 <p>Browse our complete list of current vacancies across Nigeria — updated daily with new opportunities.</p>
-               </div>
-             </div>
-             <button className="jobs-view-all-btn" onClick={onViewAll}>
-               <span>View All Jobs</span>
-               <span className="jobs-view-all-arrow">
-                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                   <path d="M4 10h12M10 4l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                 </svg>
-               </span>
-             </button>
-           </div>
-         </div>
+const { useState, useEffect, useRef } = React;
 
-         <div className="jobs-footer" style={{position:'relative',zIndex:1}} ref={el=>ref(el,5)}>
-           <p>More openings posted daily. Follow us on Facebook for instant alerts.</p>
-           <div className="jobs-footer-btns">
-             <a href="https://www.facebook.com/jvgbusinesssolutionshroutsourcing" target="_blank" rel="noopener noreferrer" className="fb-btn">📘 Follow on Facebook</a>
-             <button className="btn-primary" onClick={()=>window.__goToContact&&window.__goToContact()}><span>📄 Submit Your CV</span></button>
-           </div>
-         </div>
-       </section>
-     );
-   }
+// Initialise EmailJS once (v4 API)
+(function () {
+  if (typeof emailjs !== 'undefined') {
+    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+  }
+})();
 
-   /* ══════════════════════════════════════════════════
-      JOBS FULL PAGE
-      ══════════════════════════════════════════════════ */
-   function JobsPage({ jobs, onBack }) {
-     useEffect(() => { window.scrollTo(0, 0); }, []);
-     const [filter, setFilter] = useState('all');
-     const [search, setSearch] = useState('');
-     const scroll = () => window.__goToContact&&window.__goToContact();
+// Helper — send via EmailJS
+async function sendEmail(templateId, params) {
+  if (typeof emailjs === 'undefined') throw new Error('EmailJS SDK not loaded');
+  const response = await emailjs.send(EMAILJS_SERVICE_ID, templateId, params);
+  if (response && response.status !== 200) throw new Error('EmailJS status ' + response.status);
+  return response;
+}
 
-     const visible = jobs.filter(j => j.active);
-     const filtered = visible.filter(j => {
-       const matchBadge = filter === 'all' || j.badge === filter;
-       const q = search.trim().toLowerCase();
-       const matchSearch = !q ||
-         j.title.toLowerCase().includes(q) ||
-         j.location.toLowerCase().includes(q) ||
-         (j.industry || '').toLowerCase().includes(q) ||
-         (j.description || '').toLowerCase().includes(q);
-       return matchBadge && matchSearch;
-     });
+// ============================================================
+// HOOKS
+// ============================================================
+function useReveal(options = {}) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setVisible(true); obs.disconnect(); }
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px', ...options });
+    obs.observe(el); return () => obs.disconnect();
+  }, []);
+  return [ref, visible];
+}
 
-     const handleSearchChange = (e) => setSearch(e.target.value);
-     const handleSearchClear = () => setSearch('');
+function useCountUp(targetStr, duration = 3200, triggered = false) {
+  const [display, setDisplay] = useState('0');
+  const rafRef = useRef(null); const startedRef = useRef(false);
+  useEffect(() => {
+    if (!triggered || startedRef.current) return; startedRef.current = true;
+    const match = String(targetStr).match(/^(\D*?)(\d+(?:\.\d+)?)(\D*)$/);
+    if (!match) { setDisplay(targetStr); return; }
+    const prefix = match[1]||'', target = parseFloat(match[2]), suffix = match[3]||'';
+    const isDecimal = match[2].includes('.'), decimals = isDecimal ? match[2].split('.')[1].length : 0;
+    const startTime = performance.now();
+    const ease = t => 1 - Math.pow(1-t,3);
+    function tick(now) {
+      const p = Math.min((now-startTime)/duration,1), cur = ease(p)*target;
+      setDisplay(prefix+(isDecimal?cur.toFixed(decimals):Math.floor(cur))+suffix);
+      if (p<1) rafRef.current=requestAnimationFrame(tick);
+      else setDisplay(prefix+(isDecimal?target.toFixed(decimals):Math.floor(target))+suffix);
+    }
+    rafRef.current = requestAnimationFrame(tick);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [triggered]);
+  return display;
+}
 
-     return (
-       <div className="full-page">
-         {/* Page Hero */}
-         <div className="full-page-hero jobs-page-hero">
-           <div className="full-page-hero-bg">
-             <div className="hero-orb hero-orb-1" style={{opacity:0.4}} />
-             <div className="hero-orb hero-orb-2" style={{opacity:0.4}} />
-             <StarField />
-           </div>
-           <div className="full-page-hero-content">
-             <button className="back-btn" onClick={onBack}>← Back to Home</button>
-             <div className="full-page-eyebrow">
-               <span className="hero-eyebrow-line" />
-               <span>Live Opportunities Across Nigeria</span>
-               <span className="hero-eyebrow-dot" />
-             </div>
-             <h1 className="full-page-title">
-               Featured <em>Job Openings</em>
-             </h1>
-             <p className="full-page-subtitle">
-               Browse our complete list of current vacancies. Pre-screened roles across every Nigerian state — updated daily with new opportunities.
-             </p>
-             <div className="full-page-stats">
-               <div className="full-page-stat"><strong>{visible.length}</strong><span>Active Roles</span></div>
-               <div className="full-page-stat"><strong>{[...new Set(visible.map(j=>j.industry))].length}</strong><span>Industries</span></div>
-               <div className="full-page-stat"><strong>{[...new Set(visible.map(j=>j.location))].length}</strong><span>Locations</span></div>
-               <div className="full-page-stat"><strong>{visible.filter(j=>j.badge==='remote').length}</strong><span>Remote Roles</span></div>
-             </div>
-           </div>
-         </div>
+// ============================================================
+// DATA
+// ============================================================
+const HERO_STATS = [
+  { value:'500+', label:'Placements Made' }, { value:'80+', label:'Client Partners' },
+  { value:'15+', label:'Industries Served' }, { value:'96%', label:'Satisfaction Rate' },
+];
+const ABOUT_STATS = [{ value:'10+', label:'Years Experience' }, { value:'500+', label:'Placements Made' }];
+const ABOUT_PAGE_STATS = [
+  { value:'10+', label:'Years in Business' }, { value:'500+', label:'Successful Placements' },
+  { value:'80+', label:'Corporate Clients' }, { value:'15+', label:'Industries Covered' }, { value:'96%', label:'Client Satisfaction' },
+];
+const JOBS_PAGE_STATS = [
+  { value:'120+', label:'Active Openings' }, { value:'500+', label:'Candidates Placed' },
+  { value:'80+', label:'Hiring Partners' }, { value:'15+', label:'Sectors' }, { value:'48', label:'Hrs Avg Placement' },
+];
+const CONTACT_PAGE_STATS = [
+  { value:'24', label:'Hour Response Time' }, { value:'80+', label:'Happy Clients' },
+  { value:'500+', label:'Careers Launched' }, { value:'96%', label:'Repeat Business Rate' },
+];
+const BENEFITS = [
+  { icon:'⚡', title:'Speed to Hire', text:'Our pre-vetted talent pool means you get shortlisted candidates within 48 hours — not weeks.' },
+  { icon:'🎯', title:'Precision Matching', text:'We go beyond CVs. Our process assesses culture fit, attitude, and long-term potential.' },
+  { icon:'🏆', title:'Guaranteed Results', text:'96% of our placements stay beyond 12 months. We offer a free replacement guarantee.' },
+  { icon:'🌍', title:'Pan-Nigeria Reach', text:'From Lagos to Abuja, Port Harcourt to Kano — we place talent across all 36 states.' },
+  { icon:'🤝', title:'Full HR Support', text:'Onboarding, payroll administration, compliance — we handle the full employee lifecycle.' },
+  { icon:'🏨', title:'Hospitality Specialists', text:'Deep expertise placing hotel, restaurant, and events staff at every level.' },
+];
+const SERVICES = [
+  { n:'01', title:'Permanent Recruitment', text:'End-to-end talent acquisition from sourcing to onboarding. We find leaders, managers, and specialists across all functions.' },
+  { n:'02', title:'Contract & Temporary Staffing', text:'Flexible workforce solutions for seasonal demands, project peaks, and interim roles. Scale up or down with confidence.' },
+  { n:'03', title:'HR Outsourcing', text:'Let us manage payroll, compliance, employee relations, and HR administration so you can focus on growth.' },
+  { n:'04', title:'Hospitality Staffing', text:"Specialist placement of front-of-house, back-of-house, event, and management roles across Nigeria's hospitality sector." },
+  { n:'05', title:'Executive Search', text:'Confidential, research-led search for C-suite, director, and senior management appointments.' },
+  { n:'06', title:'Training & Development', text:'Custom learning programmes to upskill your existing workforce and embed a culture of continuous improvement.' },
+];
+const HOW_IT_WORKS_EMPLOYER = {
+  intro:'From your first call to a successful hire — we handle every step so you can focus on running your business.',
+  steps:[
+    { step:'1', title:'Discovery Call', text:"We learn your business, culture, team structure and the exact profile you need to succeed." },
+    { step:'2', title:'Role Briefing', text:'We agree on timelines, salary benchmarks, and craft a compelling job spec that attracts the best.' },
+    { step:'3', title:'Talent Search', text:"Our consultants tap our network and database to identify candidates others can't reach." },
+    { step:'4', title:'Shortlist & Present', text:'You receive 3–5 thoroughly vetted candidates with our detailed assessment notes within 48 hours.' },
+    { step:'5', title:'Interview & Select', text:'We coordinate interviews, gather feedback, manage offers and handle counteroffers on your behalf.' },
+  ],
+};
+const HOW_IT_WORKS_CANDIDATE = {
+  intro:'Your career deserves more than just a CV submission. We advocate for you at every stage of the process.',
+  steps:[
+    { step:'1', title:'Register with Us', text:"Submit your profile online or call us directly. We'll match you with a specialist consultant in your field." },
+    { step:'2', title:'CV & Profile Review', text:"We help you craft a compelling CV and position your strengths to stand out to Nigeria's top employers." },
+    { step:'3', title:'Role Matching', text:'We proactively match you with live vacancies and exclusive roles not advertised anywhere else.' },
+    { step:'4', title:'Interview Preparation', text:'We brief you fully on every company and role, and coach you through interview techniques that win offers.' },
+    { step:'5', title:'Offer & Placement', text:'We negotiate on your behalf and support your onboarding so your new career starts on the right foot.' },
+  ],
+};
+const TESTIMONIALS = [
+  { name:'Adaeze Okonkwo', role:'HR Director, Transcorp Hotels', initials:'AO', stars:5, text:'JVG filled 14 positions across our Lagos properties in under three weeks. The quality was exceptional — every hire is still with us today.' },
+  { name:'Emeka Nwachukwu', role:'CEO, Meridian Consulting', initials:'EN', stars:5, text:"We've used many recruitment agencies. JVG is the only one that truly understands our culture and consistently delivers above expectation." },
+  { name:'Fatima Al-Hassan', role:'Operations Manager, Sterling Bank', initials:'FA', stars:5, text:'From our first call to onboarding our new team lead, JVG was professional, responsive and transparent throughout. Highly recommended.' },
+  { name:'Chukwudi Eze', role:'MD, Eagle Heights Properties', initials:'CE', stars:5, text:'JVG handled our entire HR outsourcing and reduced our administrative burden by 60%. The ROI was clear within the first quarter.' },
+  { name:'Amina Garba', role:'Director, NISA Hospital', initials:'AG', stars:5, text:'Finding qualified medical support staff in Abuja is notoriously difficult. JVG found us three excellent hires within a fortnight.' },
+  { name:'Tunde Adesanya', role:'GM, Broll Nigeria', initials:'TA', stars:5, text:'Their executive search practice is world-class. Discreet, thorough, and they found our new COO in 6 weeks. Remarkable.' },
+];
+const LEADERSHIP = [
+  { name:'Head of Recruitment', role:'Head of Recruitment', photo:'hr.jpeg', bio:"A seasoned recruitment professional with deep expertise in talent acquisition across Nigeria's most competitive sectors. She leads our consultant team with precision, passion, and an unmatched eye for potential." },
+  { name:'Founder & CEO', role:'Founder & CEO', photo:'Founder.jpeg', bio:'The visionary behind JVG Recruitment Solutions. With over a decade of HR leadership experience across banking, hospitality, and FMCG, she founded JVG with one mission — to raise the standard of recruitment in Nigeria.' },
+  { name:'Client Relations Director', role:'Client Relations Director', photo:'passport.jpeg', bio:'The bridge between our clients and our consultants. He ensures every employer partnership is built on trust, transparency, and results — managing our portfolio of 80+ corporate clients with dedication and care.' },
+];
+const INDUSTRY_ICONS = {
+  'Hospitality':'🏨','Finance':'💰','HR':'👥','Oil & Gas':'⛽',
+  'FMCG':'🛒','Healthcare':'🏥','Technology':'💻','Banking':'🏦',
+  'Construction':'🏗️','Education':'🎓','Legal':'⚖️','Marketing':'📣',
+  'Logistics':'🚚','Real Estate':'🏠','Consulting':'📊','Default':'💼',
+};
+function getJobIcon(industry) { return INDUSTRY_ICONS[industry] || INDUSTRY_ICONS['Default']; }
 
-         {/* Filters */}
-         <div className="jobs-page-filters-bar">
-           <div className="jobs-page-search-wrap">
-             <span className="jobs-page-search-icon">🔍</span>
-             <input
-               className="jobs-page-search"
-               type="text"
-               placeholder="Search by title, location or industry…"
-               value={search}
-               onChange={handleSearchChange}
-             />
-             {search && <button className="jobs-page-search-clear" onClick={handleSearchClear}>✕</button>}
-           </div>
-           <div className="jobs-page-filter-tabs">
-             {['all','full-time','contract','remote','part-time'].map(f => (
-               <button
-                 key={f}
-                 className={`jobs-page-filter-tab${filter===f?' active':''}`}
-                 onClick={() => setFilter(f)}
-               >
-                 {f === 'all' ? 'All Roles' : BADGE_OPTIONS.find(b=>b.value===f)?.label || f}
-               </button>
-             ))}
-           </div>
-         </div>
+const SAMPLE_JOBS = [
+  { id:1, title:'General Manager — Hospitality', type:'Permanent', location:'Lagos', industry:'Hospitality', salary:'₦18M – ₦24M / year', excerpt:'A leading 5-star hotel group seeks an experienced GM to oversee operations across two Lagos properties.', description:'<h4>About the Role</h4><p>We are recruiting on behalf of a leading 5-star hotel group operating two premium properties in Lagos. The General Manager will have full P&L responsibility and lead a team of over 200 hospitality professionals.</p><h4>Key Responsibilities</h4><ul><li>Oversee all hotel operations including front office, F&B, housekeeping, and events</li><li>Drive revenue growth and maintain exceptional guest satisfaction scores</li><li>Lead, mentor and develop department heads and senior managers</li><li>Manage budgets, forecasting and financial reporting to the Group Board</li><li>Ensure full compliance with brand standards and health & safety regulations</li></ul><h4>Requirements</h4><ul><li>Minimum 10 years in hospitality management, at least 5 at GM level</li><li>Degree in Hospitality Management or related field</li><li>Proven track record with a recognised international hotel brand</li><li>Excellent leadership, financial acumen and guest relations skills</li></ul>' },
+  { id:2, title:'Head of Finance', type:'Permanent', location:'Abuja', industry:'Finance', salary:'₦22M – ₦30M / year', excerpt:'Fast-growing fintech seeks a strategic CFO-level finance head. ICAN/ACCA qualified, 8+ years post-qualification experience.', description:'<h4>About the Role</h4><p>Our client is a fast-scaling Nigerian fintech disrupting the payments and lending space. They seek a commercially astute Head of Finance to partner with the CEO and shape the financial future of the business.</p><h4>Key Responsibilities</h4><ul><li>Lead all financial planning, analysis, budgeting, and treasury functions</li><li>Prepare board-level financial reports and investor presentations</li><li>Drive cost optimisation and profitability improvement initiatives</li><li>Manage external auditors, regulators and banking relationships</li><li>Build and develop a high-performing finance team</li></ul><h4>Requirements</h4><ul><li>ICAN or ACCA qualified with 8+ years post-qualification experience</li><li>Prior experience in fintech, banking or financial services preferred</li><li>Deep expertise in financial modelling and fundraising processes</li><li>Strong leadership presence and ability to influence at C-suite level</li></ul>' },
+  { id:3, title:'HR Business Partner', type:'Permanent', location:'Lagos', industry:'HR', salary:'₦10M – ₦15M / year', excerpt:'Partner with senior leadership to drive talent strategy across a 300-person organisation. CIPM membership essential.', description:'<h4>About the Role</h4><p>A leading professional services firm seeks an experienced HR Business Partner to serve as a strategic advisor to senior leaders across a 300-person organisation in Lagos.</p><h4>Key Responsibilities</h4><ul><li>Act as a trusted advisor to business unit leaders on all people-related matters</li><li>Lead talent acquisition, performance management and succession planning</li><li>Drive employee engagement, culture and organisational development initiatives</li><li>Manage employee relations cases and ensure HR compliance</li><li>Partner with L&D to identify and close capability gaps</li></ul><h4>Requirements</h4><ul><li>CIPM membership essential; SHRM or CIPD certification an advantage</li><li>Minimum 6 years progressive HR experience, ideally in professional services</li><li>Strong business acumen and ability to translate HR strategy into outcomes</li><li>Excellent interpersonal and stakeholder management skills</li></ul>' },
+  { id:4, title:'Front Office Supervisor', type:'Contract', location:'Abuja', industry:'Hospitality', salary:'₦3.5M – ₦5M / year', excerpt:'Supervise front desk operations for a boutique hotel in Abuja. Guest experience excellence and team leadership skills essential.', description:'<h4>About the Role</h4><p>A well-regarded boutique hotel in the heart of Abuja is seeking a polished Front Office Supervisor to lead its front desk team and ensure exceptional arrival and departure experiences.</p><h4>Key Responsibilities</h4><ul><li>Supervise daily front office operations including check-in, check-out and reservations</li><li>Train, coach and motivate a team of 6 front desk agents</li><li>Handle guest complaints swiftly and professionally to ensure satisfaction</li><li>Monitor room inventory and coordinate closely with housekeeping</li><li>Prepare daily operational reports for the Rooms Division Manager</li></ul><h4>Requirements</h4><ul><li>HND or BSc in Hospitality Management or related field</li><li>Minimum 3 years front office experience in a hotel environment</li><li>Proficiency in hotel PMS software (Opera or similar)</li><li>Outstanding communication, problem-solving and leadership skills</li></ul>' },
+  { id:5, title:'Operations Manager', type:'Permanent', location:'Port Harcourt', industry:'Oil & Gas', salary:'₦20M – ₦28M / year', excerpt:'Oversee day-to-day operations for an integrated energy services company in the Niger Delta region.', description:'<h4>About the Role</h4><p>Our client is an established integrated energy services company with operations across the Niger Delta. They require a seasoned Operations Manager to oversee field operations, logistics and contractor management.</p><h4>Key Responsibilities</h4><ul><li>Manage end-to-end field operations including logistics, maintenance and HSE compliance</li><li>Coordinate with client companies, subcontractors and government agencies</li><li>Develop and manage operational budgets and KPIs</li><li>Lead a multi-disciplinary team of engineers, supervisors and support staff</li><li>Implement continuous improvement initiatives to drive efficiency and safety</li></ul><h4>Requirements</h4><ul><li>BSc/BEng in Engineering, Operations Management or related field</li><li>Minimum 8 years operations experience in the oil and gas sector</li><li>Strong knowledge of HSE regulations and Nigerian oil industry standards</li><li>Demonstrated ability to manage complex, multi-stakeholder projects</li></ul>' },
+  { id:6, title:'Marketing Manager', type:'Permanent', location:'Lagos', industry:'FMCG', salary:'₦9M – ₦13M / year', excerpt:'Lead brand and digital marketing strategy for an established FMCG brand. Agency background preferred.', description:'<h4>About the Role</h4><p>A well-established FMCG brand with a strong Nigerian market presence is looking for a creative and data-driven Marketing Manager to lead integrated marketing campaigns and grow brand equity.</p><h4>Key Responsibilities</h4><ul><li>Develop and execute the annual marketing plan and brand calendar</li><li>Lead digital marketing including social media, SEO, email and paid media</li><li>Manage advertising agency relationships and campaign production</li><li>Analyse market trends, consumer insights and campaign performance data</li><li>Collaborate with the sales team to develop trade marketing activations</li></ul><h4>Requirements</h4><ul><li>BSc in Marketing, Business Administration or related field</li><li>5+ years brand or marketing management experience, ideally in FMCG</li><li>Agency background and ATL/BTL campaign management experience preferred</li><li>Proficiency in digital analytics tools (Google Analytics, Meta Ads Manager)</li></ul>' },
+];
 
-         {/* Jobs Grid */}
-         <div className="jobs-page-body">
-           {filtered.length === 0 ? (
-             <div className="jobs-empty" style={{background:'var(--navy-deep)', padding:'80px 20px'}}>
-               <div className="jobs-empty-icon">🔍</div>
-               <p style={{color:'rgba(255,255,255,.5)'}}>No roles match your search. Try adjusting your filters.</p>
-             </div>
-           ) : (
-             <div className="jobs-page-grid">
-               {filtered.map((job, i) => (
-                 <div key={job.id} className="job-card-full" style={{opacity:1, transform:'none'}}>
-                   <div className="job-card-full-header">
-                     <div className="job-icon">{job.icon}</div>
-                     <span className={`job-badge ${job.badge}`}>{BADGE_OPTIONS.find(b=>b.value===job.badge)?.label||job.badge}</span>
-                   </div>
-                   <div className="job-title">{job.title}</div>
-                   <div className="job-meta">
-                     <span className="job-meta-item">📍 {job.location}</span>
-                     <span className="job-meta-item">🏢 {job.industry}</span>
-                   </div>
-                   {job.description && <div className="job-desc-text">{job.description}</div>}
-                   <div style={{flex:1}} />
-                   <div className="job-salary">{job.salary}</div>
-                   <button className="job-apply-btn-full" onClick={scroll}>
-                     Apply Now
-                     <svg width="14" height="14" viewBox="0 0 20 20" fill="none" style={{marginLeft:'6px'}}>
-                       <path d="M4 10h12M10 4l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                     </svg>
-                   </button>
-                 </div>
-               ))}
-             </div>
-           )}
-         </div>
+// ============================================================
+// NAVBAR
+// ============================================================
+function Navbar({ page, setPage, theme, toggleTheme }) {
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  useEffect(() => { setMenuOpen(false); }, [page]);
+  const navLinks = [
+    { label:'Home', id:'home' }, { label:'About', id:'about' },
+    { label:'Services', id:'services' }, { label:'Jobs', id:'jobs' }, { label:'Contact', id:'contact' },
+  ];
+  return (
+    <>
+      <nav className={`navbar${scrolled ? ' scrolled' : ''}`}>
+        <div className="container">
+          <div className="navbar__inner">
+            <button onClick={() => setPage('home')} className="navbar__logo" style={{background:'none',border:'none',cursor:'pointer'}}>
+              <div className="navbar__logo-mark">JVG</div><span>JVG Recruitment</span>
+            </button>
+            <div className="navbar__nav">
+              {navLinks.map(l => (
+                <a key={l.id} href="#" onClick={e=>{e.preventDefault();setPage(l.id);}} style={{color:page===l.id?'var(--gold)':undefined}}>{l.label}</a>
+              ))}
+            </div>
+            <div className="navbar__actions">
+              <button className="btn-theme" onClick={toggleTheme} title="Toggle theme">{theme==='dark'?'☀️':'🌙'}</button>
+              <button className="mobile-menu-btn" onClick={()=>setMenuOpen(p=>!p)} aria-label="Open menu">
+                <span/><span/><span/>
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <div className={`mobile-menu${menuOpen?' open':''}`}>
+        <button className="mobile-menu-close" onClick={()=>setMenuOpen(false)}>✕</button>
+        {navLinks.map(l => (
+          <a key={l.id} href="#" onClick={e=>{e.preventDefault();setPage(l.id);setMenuOpen(false);}}>{l.label}</a>
+        ))}
+      </div>
+    </>
+  );
+}
 
-         {/* Footer CTA */}
-         <div className="full-page-cta">
-           <div className="full-page-container" style={{textAlign:'center'}}>
-             <h2 style={{fontFamily:'var(--font-display)', fontSize:'clamp(1.8rem,3.5vw,2.8rem)', color:'var(--ivory)', marginBottom:'16px'}}>Don't See the <em style={{color:'var(--gold-mid)'}}>Right Role?</em></h2>
-             <p style={{color:'rgba(255,255,255,.5)', marginBottom:'36px'}}>Submit your CV and we'll match you to opportunities as they arise — across every Nigerian state.</p>
-             <div style={{display:'flex', gap:'16px', justifyContent:'center', flexWrap:'wrap'}}>
-               <button className="btn-primary" onClick={scroll}><span>📄 Submit Your CV</span></button>
-               <button className="btn-secondary" onClick={onBack}><span>← Back to Home</span></button>
-             </div>
-           </div>
-         </div>
-       </div>
-     );
-   }
-   
-   /* ══════════════════════════════════════════════════
-      TESTIMONIALS
-      ══════════════════════════════════════════════════ */
-   function Testimonials() {
-     const ref = useReveal();
-     const list = [
-       { init:'AO', name:'Adaeze Okafor',  role:'HR Manager, FinTech Startup — Lagos',       quote:'JVG Recruitment Solutions filled three critical roles for us in under two weeks. The quality of candidates was exceptional and their professionalism throughout was outstanding.' },
-       { init:'TI', name:'Tobi Ibrahim',   role:'Placed Candidate — Sales Executive, Abuja', quote:'After months of searching on my own, JVG matched me with my dream role within three weeks. They guided me through every step — from my CV to the final interview. Forever grateful.' },
-       { init:'EM', name:'Emmanuel Musa',  role:'Operations Director, Construction Firm',     quote:'We outsourced our entire hiring process for our Abuja expansion to JVG. They recruited 12 qualified staff in 30 days. Seamless, efficient, and worth every naira.' },
-     ];
-     return (
-       <section className="testi-section" id="testimonials">
-         <div className="section-header center reveal" ref={el=>ref(el,0)}>
-           <div className="section-label center">Client Success Stories</div>
-           <h2 className="section-title dark">What Our <em>Clients Say</em></h2>
-           <p className="section-desc dark">Trusted by employers and job seekers across Nigeria. Here's what they say about partnering with JVG.</p>
-         </div>
-         <div className="testi-grid">
-           {list.map((t,i)=>(
-             <div key={t.name} className={`testi-card reveal reveal-d${i+1}`} ref={el=>ref(el,i+1)}>
-               <div className="testi-mark">"</div>
-               <div className="testi-stars">★★★★★</div>
-               <blockquote>"{t.quote}"</blockquote>
-               <div className="testi-author">
-                 <div className="testi-avatar">{t.init}</div>
-                 <div><div className="testi-name">{t.name}</div><div className="testi-role">{t.role}</div></div>
-               </div>
-             </div>
-           ))}
-         </div>
-       </section>
-     );
-   }
-   
-   /* ══════════════════════════════════════════════════
-      CTA BANNER
-      ══════════════════════════════════════════════════ */
-   function CtaBanner() {
-     return (
-       <div className="cta-banner">
-         <div className="cta-banner-bg" />
-         <div className="cta-inner">
-           <div className="section-label center" style={{marginBottom:'16px'}}>Take the Next Step</div>
-           <div className="gold-divider" />
-           <h2>Ready to Find the <em>Right Talent</em>?</h2>
-           <p>Post a vacancy or submit your resume today. Our consultants are ready to connect the right people with the right opportunities — across Nigeria.</p>
-           <div className="cta-btns">
-             <button className="btn-primary" onClick={()=>window.__goToContact&&window.__goToContact()}><span>📋 Post a Job Vacancy</span></button>
-             <button className="btn-secondary" onClick={()=>window.__goToContact&&window.__goToContact()}><span>📄 Submit Your Resume</span></button>
-           </div>
-         </div>
-       </div>
-     );
-   }
-   
-   /* ══════════════════════════════════════════════════
-      EMAILJS CONFIG
-      ══════════════════════════════════════════════════ */
-   const EMAILJS_SERVICE    = 'service_oai19oi';
-   const EMAILJS_TEMPLATE   = 'template_5yoz7uv';
-   const EMAILJS_SERVICE_2  = 'service_thy1736';
-   const EMAILJS_TEMPLATE_2 = 'template_b05p02z';
-   const EMAILJS_PUBLIC_KEY_2 = 'd26MprEm9Q41eC6-g';
-   const CV_REQUIRED_ROLES  = ['Job Seeker / Candidate'];
+// ============================================================
+// HERO
+// ============================================================
+function HeroSection({ setPage }) {
+  const stars = Array.from({length:24}, ()=>({ size:Math.random()*4+2, x:Math.random()*100, y:Math.random()*100, dur:Math.random()*4+3, delay:Math.random()*5, op:Math.random()*0.4+0.15 }));
+  const [titleRef, titleVisible] = useReveal();
+  return (
+    <section className="hero">
+      <div className="hero__stars">{stars.map((s,i)=><span key={i} className="star" style={{width:s.size,height:s.size,left:`${s.x}%`,top:`${s.y}%`,'--dur':`${s.dur}s`,'--delay':`${s.delay}s`,'--op':s.op}}/>)}</div>
+      <div className="hero__orb hero__orb--1"/><div className="hero__orb hero__orb--2"/>
+      <div className="container">
+        <div className="hero__content" ref={titleRef}>
+          <div className={`hero__eyebrow reveal${titleVisible?' visible':''}`}>
+            <div className="hero__eyebrow-line"/>
+            <span className="luxury-badge">
+              <span className="luxury-badge__star" aria-hidden="true">✦</span>
+              Nigeria's Trusted Recruitment Partner
+              <span className="luxury-badge__star luxury-badge__star--right" aria-hidden="true">✦</span>
+            </span>
+          </div>
+          <h1 className={`display-xl hero__title reveal reveal-delay-1${titleVisible?' visible':''}`}>
+            Professional Recruitment &<em> HR Outsourcing</em> Services in Nigeria
+          </h1>
+          <p className={`hero__subtitle reveal reveal-delay-2${titleVisible?' visible':''}`}>
+            Match your business with top talent — quickly, efficiently and reliably. We help employers build winning teams and support job seekers in securing meaningful careers across Nigeria.
+          </p>
+          <div className={`hero__cta reveal reveal-delay-3${titleVisible?' visible':''}`}>
+            <button className="btn btn--primary btn--lg" onClick={()=>setPage('contact')}>Find Talent →</button>
+            <button className="btn btn--outline btn--lg" onClick={()=>setPage('jobs')}>Browse Jobs</button>
+          </div>
+        </div>
+        <div className="hero__stats">
+          {HERO_STATS.map((s,i) => <HeroStatItem key={i} stat={s} delay={i*0.1}/>)}
+        </div>
+      </div>
+    </section>
+  );
+}
 
-   /* ══════════════════════════════════════════════════
-      CONTACT FULL PAGE
-      ══════════════════════════════════════════════════ */
-   function ContactPage({ onBack }) {
-     useEffect(() => { window.scrollTo(0, 0); }, []);
-     const ref = useReveal();
+function HeroStatItem({ stat, delay }) {
+  const [ref, vis] = useReveal();
+  const display = useCountUp(stat.value, 3200, vis);
+  return (
+    <div ref={ref} className={`hero__stat-item reveal${vis?' visible':''}`} style={{transitionDelay:`${delay}s`}}>
+      <span className="hero__stat-number count-up-value">{display}</span>
+      <span className="hero__stat-label">{stat.label}</span>
+    </div>
+  );
+}
 
-     const info = [
-       { icon:'📧', label:'Email Us', val:'info@jvgrecruitmentsolutions.com', href:'mailto:info@jvgrecruitmentsolutions.com', sub:'We reply within 24 hours on business days' },
-       { icon:'📞', label:'Call / WhatsApp', val:'+234 704 745 3599', href:'tel:+2347047453599', sub:'Mon – Fri, 8am – 6pm WAT' },
-       { icon:'📍', label:'Our Location', val:'Abuja, Federal Capital Territory, Nigeria', href:'https://maps.google.com/?q=Abuja+FCT+Nigeria', sub:'Serving clients across all Nigerian states' },
-       { icon:'📘', label:'Facebook', val:'@jvgbusinesssolutionshroutsourcing', href:'https://www.facebook.com/jvgbusinesssolutionshroutsourcing', sub:'Daily job alerts & recruitment updates' },
-     ];
+// ============================================================
+// BENEFITS
+// ============================================================
+function BenefitCard({ benefit, delay }) {
+  const [ref, vis] = useReveal();
+  return (
+    <div ref={ref} className={`benefit-card reveal${vis?' visible':''}`} style={{transitionDelay:`${delay}s`}}>
+      <div className="benefit-card__icon">{benefit.icon}</div>
+      <h3 className="benefit-card__title">{benefit.title}</h3>
+      <p className="benefit-card__text">{benefit.text}</p>
+    </div>
+  );
+}
 
-     const faqs = [
-       { q:'How quickly can you fill a role?', a:'For most positions, we can present pre-screened candidates within 3–7 business days. Urgent roles can often be filled faster thanks to our active talent pipeline.' },
-       { q:'What industries do you recruit for?', a:'We recruit across all sectors — hospitality, finance, engineering, healthcare, marketing, administration, and more. If you need talent, we can find it.' },
-       { q:'What locations do you cover?', a:'We operate nationwide. While our headquarters is in Abuja, we place candidates and serve clients across every Nigerian state including Lagos, Port Harcourt, Kano, and beyond.' },
-       { q:'How does the recruitment process work?', a:'We start with a briefing call to understand your needs, then source and screen candidates, coordinate interviews, and support all the way through to onboarding.' },
-     ];
+function BenefitsSection() {
+  const [headerRef, headerVis] = useReveal();
+  return (
+    <section className="section benefits">
+      <div className="container">
+        <div ref={headerRef} className="section-header">
+          <p className={`eyebrow section-header__eyebrow reveal${headerVis?' visible':''}`}>Why JVG</p>
+          <h2 className={`display-md section-header__title reveal reveal-delay-1${headerVis?' visible':''}`}>Built for Results</h2>
+          <p className={`section-header__subtitle reveal reveal-delay-2${headerVis?' visible':''}`}>We combine speed, precision, and deep industry knowledge to deliver talent that transforms organisations.</p>
+        </div>
+        <div className="benefits__grid">
+          {BENEFITS.map((b,i) => <BenefitCard key={i} benefit={b} delay={(i%3)*0.12}/>)}
+        </div>
+      </div>
+    </section>
+  );
+}
 
-     const [sent,    setSent]    = useState(false);
-     const [sending, setSending] = useState(false);
-     const [sendErr, setSendErr] = useState('');
-     const [cvFile,  setCvFile]  = useState(null);
-     const [cvErr,   setCvErr]   = useState('');
-     const [form, setForm] = useState({ firstName:'', lastName:'', email:'', phone:'', role:'', subject:'', message:'' });
-     const formatSize = (b) => b<1024?`${b} B`:b<1048576?`${(b/1024).toFixed(1)} KB`:`${(b/1048576).toFixed(1)} MB`;
-     const toBase64 = (file) => new Promise((res,rej) => { const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(file); });
-     const isCvRequired = CV_REQUIRED_ROLES.includes(form.role);
-     const handleChange = e => { setForm({...form,[e.target.name]:e.target.value}); if(e.target.name==='role') setCvErr(''); };
-     const handleSubmit = async (e) => {
-       e.preventDefault(); setSendErr(''); setCvErr('');
-       if (isCvRequired && !cvFile) { setCvErr('Please attach your CV / Resume to continue.'); return; }
-       setSending(true);
-       try {
-         let attachmentData='', attachmentName='';
-         if (cvFile) { attachmentData = await toBase64(cvFile); attachmentName = cvFile.name; }
-         const params = { from_name:`${form.firstName} ${form.lastName}`, from_email:form.email, phone:form.phone||'Not provided', role:form.role, subject:form.subject, message:form.message, cv_filename:attachmentName||'No CV attached', attachment_name:attachmentName, attachment:attachmentData };
-         await Promise.all([emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,params),emailjs.send(EMAILJS_SERVICE_2,EMAILJS_TEMPLATE_2,params,EMAILJS_PUBLIC_KEY_2)]);
-         if (form.role==='Employer / Hiring Manager'||form.role==='HR Professional') {
-           const entry = { id:Date.now(), timestamp:new Date().toISOString(), firstName:form.firstName, lastName:form.lastName, email:form.email, phone:form.phone, role:form.role, subject:form.subject, message:form.message, cvFileName:cvFile?cvFile.name:null, cvFileSize:cvFile?formatSize(cvFile.size):null, read:false };
-           saveEnquiries([entry,...loadEnquiries()]);
-         }
-         setSent(true); setForm({firstName:'',lastName:'',email:'',phone:'',role:'',subject:'',message:''}); setCvFile(null);
-         setTimeout(()=>setSent(false),6000);
-       } catch(err) { console.error('EmailJS error:',err); setSendErr('Something went wrong. Please try again or email us directly at info@jvgrecruitmentsolutions.com'); }
-       finally { setSending(false); }
-     };
+// ============================================================
+// ABOUT SECTION (home)
+// ============================================================
+function AboutStatItem({ stat }) {
+  const [ref, vis] = useReveal();
+  const display = useCountUp(stat.value, 3200, vis);
+  return (
+    <div ref={ref} className={`about__visual-stat reveal${vis?' visible':''}`}>
+      <div className="about__visual-number count-up-value">{display}</div>
+      <div className="about__visual-label">{stat.label}</div>
+    </div>
+  );
+}
 
-     return (
-       <div className="full-page">
-         <div className="full-page-hero contact-page-hero">
-           <div className="full-page-hero-bg">
-             <div className="hero-orb hero-orb-1" style={{opacity:0.45}} />
-             <div className="hero-orb hero-orb-2" style={{opacity:0.4}} />
-             <StarField />
-           </div>
-           <div className="full-page-hero-content">
-             <button className="back-btn" onClick={onBack}>← Back to Home</button>
-             <div className="full-page-eyebrow">
-               <span className="hero-eyebrow-line" />
-               <span>We'd Love to Hear From You</span>
-               <span className="hero-eyebrow-dot" />
-             </div>
-             <h1 className="full-page-title">
-               Get In <em>Touch</em> With Us
-             </h1>
-             <p className="full-page-subtitle">
-               Whether you're a business looking to hire, a professional seeking your next opportunity, or you want to explore HR outsourcing — our team is ready to help.
-             </p>
-             <div className="full-page-stats">
-               <div className="full-page-stat"><strong>24hr</strong><span>Email Response</span></div>
-               <div className="full-page-stat"><strong>36+</strong><span>States Covered</span></div>
-               <div className="full-page-stat"><strong>96%</strong><span>Satisfaction Rate</span></div>
-               <div className="full-page-stat"><strong>500+</strong><span>Placements Made</span></div>
-             </div>
-           </div>
-         </div>
+function AboutSection() {
+  const [colRef,colVis]=useReveal(); const [visRef,visVis]=useReveal();
+  return (
+    <section className="section" id="about-section">
+      <div className="container">
+        <div className="about__grid">
+          <div ref={visRef}>
+            <div className={`about__visual-card reveal${visVis?' visible':''}`}>
+              <div className="eyebrow" style={{marginBottom:'1rem'}}>Our Track Record</div>
+              <h3 className="display-sm" style={{marginBottom:'0.5rem'}}>Proven Impact</h3>
+              <p style={{fontFamily:'var(--font-body)',fontSize:'0.88rem',fontWeight:300,color:'var(--text-muted)',marginBottom:'1rem'}}>Numbers that speak for themselves</p>
+              <div className="about__visual-stats">
+                {ABOUT_STATS.map((s,i) => <AboutStatItem key={i} stat={s}/>)}
+              </div>
+              <div style={{marginTop:'2rem',padding:'1.5rem',background:'var(--gold-glow)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
+                <div className="eyebrow" style={{marginBottom:'0.5rem'}}>Our Commitment</div>
+                <p style={{fontFamily:'var(--font-body)',fontSize:'0.88rem',fontWeight:300,color:'var(--text-secondary)',lineHeight:1.7}}>Every placement comes with our 90-day guarantee. If a hire doesn't work out, we find a replacement at no additional cost.</p>
+              </div>
+            </div>
+          </div>
+          <div ref={colRef}>
+            <p className={`eyebrow reveal${colVis?' visible':''}`} style={{marginBottom:'1rem'}}>About JVG</p>
+            <blockquote className={`about__quote reveal reveal-delay-1${colVis?' visible':''}`}>"Nigeria deserves world-class recruitment. That's what we deliver every day."</blockquote>
+            <p className={`about__body reveal reveal-delay-2${colVis?' visible':''}`}>Founded by HR professionals with over a decade of combined experience, JVG was built on a simple belief: the right person in the right role changes everything.</p>
+            <p className={`about__body reveal reveal-delay-3${colVis?' visible':''}`}>We serve employers across banking, hospitality, oil and gas, healthcare, FMCG, and the public sector — partnering as a true strategic extension of your HR function.</p>
+            <div className={`about__values reveal reveal-delay-4${colVis?' visible':''}`}>
+              {['Integrity','Speed','Precision','Partnership','Excellence'].map(v=><span key={v} className="about__value-tag">✦ {v}</span>)}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
-         <div className="contact-page-cards-section">
-           <div className="full-page-container">
-             <div className="reveal" ref={el=>ref(el,0)} style={{textAlign:'center',marginBottom:'56px'}}>
-               <div className="section-label center" style={{display:'flex',justifyContent:'center',color:'var(--gold-mid)'}}>Reach Us Directly</div>
-               <h2 style={{fontFamily:'var(--font-display)',fontSize:'clamp(1.8rem,3vw,2.6rem)',color:'var(--ivory)',fontWeight:600,marginBottom:'12px'}}>Every Way to <em style={{color:'var(--gold-mid)',fontStyle:'italic'}}>Connect</em></h2>
-               <p style={{color:'rgba(255,255,255,.45)',fontSize:'15px',maxWidth:'480px',margin:'0 auto',fontWeight:300}}>Pick the channel that works best for you — we're available and responsive across all of them.</p>
-             </div>
-             <div className="contact-page-cards-grid">
-               {info.map((c, i) => (
-                 <a key={c.label} href={c.href} target={c.href.startsWith('http')?'_blank':undefined} rel="noopener noreferrer"
-                    className={`contact-page-card reveal reveal-d${(i%2)+1}`} ref={el=>ref(el,i+1)}>
-                   <div className="contact-page-card-icon">{c.icon}</div>
-                   <div className="contact-page-card-body">
-                     <div className="contact-page-card-label">{c.label}</div>
-                     <div className="contact-page-card-val">{c.val}</div>
-                     <div className="contact-page-card-sub">{c.sub}</div>
-                   </div>
-                   <div className="contact-page-card-arrow">→</div>
-                 </a>
-               ))}
-             </div>
-           </div>
-         </div>
+// ============================================================
+// LEADERSHIP
+// ============================================================
+function LeaderCard({ person, delay }) {
+  const [ref, vis] = useReveal();
+  return (
+    <div ref={ref} className={`leader-card reveal${vis?' visible':''}`} style={{transitionDelay:`${delay}s`}}>
+      <div className="leader-card__photo-circle-wrap">
+        <img src={person.photo} alt={person.name} className="leader-card__photo-circle"/>
+      </div>
+      <div className="leader-card__body">
+        <h3 className="leader-card__name">{person.name}</h3>
+        <p className="leader-card__role">{person.role}</p>
+        <p className="leader-card__bio">{person.bio}</p>
+      </div>
+    </div>
+  );
+}
 
-         <div className="full-page-section" style={{background:'var(--ivory)',padding:'72px 6%'}}>
-           <div className="full-page-container">
-             <div className="contact-page-info-grid">
-               <div className="reveal" ref={el=>ref(el,10)}>
-                 <div className="section-label" style={{color:'var(--gold)'}}>Business Hours</div>
-                 <h2 className="section-title dark" style={{marginBottom:'32px'}}>When We're <em>Available</em></h2>
-                 <div className="contact-hours-list">
-                   {[
-                     { day:'Monday – Friday', hours:'8:00 AM – 6:00 PM WAT', open:true },
-                     { day:'Saturday',        hours:'9:00 AM – 2:00 PM WAT', open:true },
-                     { day:'Sunday',          hours:'Closed',                open:false },
-                   ].map(h => (
-                     <div key={h.day} className="contact-hours-row">
-                       <span className="contact-hours-day">{h.day}</span>
-                       <span className={`contact-hours-time ${h.open?'open':'closed'}`}>{h.hours}</span>
-                     </div>
-                   ))}
-                 </div>
-                 <div className="contact-hours-note">
-                   <span>💬</span>
-                   <p>WhatsApp messages are responded to outside business hours when possible. Urgent hiring needs? Send us a message and we'll prioritise your request.</p>
-                 </div>
-               </div>
-               <div className="reveal reveal-d2" ref={el=>ref(el,11)}>
-                 <div className="section-label" style={{color:'var(--gold)'}}>Our Reach</div>
-                 <h2 className="section-title dark" style={{marginBottom:'32px'}}>We Serve <em>Nationwide</em></h2>
-                 <div className="contact-reach-grid">
-                   {['Abuja FCT','Lagos','Port Harcourt','Kano','Ibadan','Enugu','Kaduna','Benin City','Aba','Onitsha','Warri','Jos'].map(city => (
-                     <div key={city} className="contact-reach-chip">
-                       <span className="contact-reach-dot" />
-                       {city}
-                     </div>
-                   ))}
-                   <div className="contact-reach-chip contact-reach-more">+ All Nigerian States</div>
-                 </div>
-               </div>
-             </div>
-           </div>
-         </div>
+function LeadershipSection() {
+  const [headerRef, headerVis] = useReveal();
+  return (
+    <section className="section leadership">
+      <div className="container">
+        <div ref={headerRef} className="section-header">
+          <p className={`eyebrow section-header__eyebrow reveal${headerVis?' visible':''}`}>The People Behind JVG</p>
+          <h2 className={`display-md section-header__title reveal reveal-delay-1${headerVis?' visible':''}`}>Meet Our Leadership Team</h2>
+          <p className={`section-header__subtitle reveal reveal-delay-2${headerVis?' visible':''}`}>Experienced, passionate, and deeply connected — our leaders bring decades of combined expertise to every client engagement.</p>
+        </div>
+        <div className="leadership__grid">
+          {LEADERSHIP.map((person,i) => <LeaderCard key={i} person={person} delay={i*0.15}/>)}
+        </div>
+      </div>
+    </section>
+  );
+}
 
-         <div className="full-page-section" style={{background:'var(--navy-deep)',padding:'72px 6%'}}>
-           <div className="full-page-container">
-             <div className="reveal" ref={el=>ref(el,20)} style={{textAlign:'center',marginBottom:'56px'}}>
-               <div className="section-label center" style={{display:'flex',justifyContent:'center'}}>Quick Answers</div>
-               <h2 className="section-title" style={{textAlign:'center'}}>Frequently Asked <em>Questions</em></h2>
-             </div>
-             <div className="contact-faq-grid">
-               {faqs.map((faq, i) => (
-                 <div key={faq.q} className={`contact-faq-card reveal reveal-d${(i%2)+1}`} ref={el=>ref(el,21+i)}>
-                   <div className="contact-faq-q">{faq.q}</div>
-                   <div className="contact-faq-a">{faq.a}</div>
-                 </div>
-               ))}
-             </div>
-           </div>
-         </div>
+// ============================================================
+// SERVICES
+// ============================================================
+function ServiceCard({ service, delay }) {
+  const [ref, vis] = useReveal();
+  return (
+    <div ref={ref} className={`service-card reveal${vis?' visible':''}`} style={{transitionDelay:`${delay}s`}}>
+      <div className="service-card__number">{service.n}</div>
+      <h3 className="service-card__title">{service.title}</h3>
+      <p className="service-card__text">{service.text}</p>
+    </div>
+  );
+}
 
-         {/* ── Contact Form Section — light card on dark bg ── */}
-         <div className="full-page-section" style={{background:'var(--navy-deep)',padding:'72px 6%'}} id="contact-form">
-           <div className="full-page-container">
-             <div className="contact-page-form-grid">
-               <div className="reveal" ref={el=>ref(el,30)}>
-                 <div className="section-label" style={{color:'var(--gold)'}}>Send a Message</div>
-                 <h2 className="section-title" style={{marginBottom:'16px'}}>We'd Love to <em>Hear From You</em></h2>
-                 <p style={{color:'rgba(255,255,255,.45)',fontSize:'14px',lineHeight:'1.8',marginBottom:'32px',fontWeight:300}}>Fill in the form and we'll get back to you within 24 hours. For urgent enquiries, WhatsApp us directly.</p>
-                 <div className="contact-cta-links">
-                   <a href="tel:+2347047453599" className="contact-cta-item">
-                     <span>📞</span><span>+234 704 745 3599</span>
-                   </a>
-                   <a href="mailto:info@jvgrecruitmentsolutions.com" className="contact-cta-item">
-                     <span>📧</span><span>info@jvgrecruitmentsolutions.com</span>
-                   </a>
-                   <a href="https://wa.me/2347047453599" target="_blank" rel="noopener noreferrer" className="contact-cta-item whatsapp">
-                     <span>💬</span><span>WhatsApp Us Now</span>
-                   </a>
-                 </div>
-               </div>
+function ServicesSection({ setPage }) {
+  const [headerRef, headerVis] = useReveal();
+  return (
+    <section className="section services">
+      <div className="container">
+        <div ref={headerRef} className="section-header">
+          <p className={`eyebrow section-header__eyebrow reveal${headerVis?' visible':''}`}>What We Do</p>
+          <h2 className={`display-md section-header__title reveal reveal-delay-1${headerVis?' visible':''}`}>Our Services</h2>
+          <p className={`section-header__subtitle reveal reveal-delay-2${headerVis?' visible':''}`}>From one placement to a full outsourced HR function — we scale to your needs.</p>
+        </div>
+        <div className="services__grid">
+          {SERVICES.map((s,i) => <ServiceCard key={i} service={s} delay={(i%3)*0.1}/>)}
+        </div>
+        <div style={{textAlign:'center',marginTop:'3rem'}}><button className="btn btn--outline" onClick={()=>setPage('contact')}>Discuss Your Needs →</button></div>
+      </div>
+    </section>
+  );
+}
 
-               {/* ── KEY FIX: use dark-form class (now renders as white card) — NO inline style override ── */}
-               <div className="contact-form-wrap dark-form reveal reveal-d1" ref={el=>ref(el,31)}>
-                 <div className="form-title">Send Us a Message</div>
-                 <p className="form-sub">For job postings, CV submissions, or general enquiries — fill in the form below.</p>
-                 {sendErr&&<div style={{background:'rgba(220,38,38,.12)',color:'#DC2626',border:'1px solid rgba(220,38,38,.2)',borderRadius:'4px',padding:'13px 16px',fontSize:'14px',marginBottom:'18px',lineHeight:'1.5'}}>⚠️ {sendErr}</div>}
-                 <form onSubmit={handleSubmit} className="contact-form">
-                   <div className="form-row">
-                     <div className="form-group"><label>First Name</label><input type="text" name="firstName" placeholder="e.g. Chioma" value={form.firstName} onChange={handleChange} required /></div>
-                     <div className="form-group"><label>Last Name</label><input type="text" name="lastName" placeholder="e.g. Obi" value={form.lastName} onChange={handleChange} required /></div>
-                   </div>
-                   <div className="form-group"><label>Email Address</label><input type="email" name="email" placeholder="you@example.com" value={form.email} onChange={handleChange} required /></div>
-                   <div className="form-group"><label>Phone Number</label><input type="tel" name="phone" placeholder="+234 XXX XXX XXXX" value={form.phone} onChange={handleChange} /></div>
-                   <div className="form-group">
-                     <label>I am a...</label>
-                     <select name="role" value={form.role} onChange={handleChange} required>
-                       <option value="">Select your role</option>
-                       <option>Employer / Hiring Manager</option>
-                       <option>Job Seeker / Candidate</option>
-                       <option>HR Professional</option>
-                       <option>Other</option>
-                     </select>
-                   </div>
-                   <div className="form-group"><label>Subject</label><input type="text" name="subject" placeholder="e.g. Job Posting, CV Submission" value={form.subject} onChange={handleChange} required /></div>
-                   <div className="form-group"><label>Message</label><textarea name="message" placeholder="Tell us what you're looking for..." value={form.message} onChange={handleChange} required /></div>
-                   <div className="form-group">
-                     <label>
-                       Attach CV / Resume
-                       {isCvRequired?<span style={{color:'#DC2626',marginLeft:'4px',fontWeight:'800'}}>*</span>:<span style={{color:'var(--grey-mid)',marginLeft:'6px',fontWeight:'400',fontSize:'11px',textTransform:'none',letterSpacing:0}}>(optional)</span>}
-                     </label>
-                     <CvUpload cvFile={cvFile} setCvFile={file=>{setCvFile(file);if(file)setCvErr('');}} required={isCvRequired} />
-                     {cvErr&&<div style={{color:'#DC2626',fontSize:'12px',fontWeight:'600',marginTop:'6px',display:'flex',alignItems:'center',gap:'5px'}}>⚠️ {cvErr}</div>}
-                   </div>
-                   <button type="submit" className={`form-submit${sent?' success':''}${sending?' sending':''}`} disabled={sent||sending}>
-                     {sent?'✅ Message Sent! We\'ll be in touch shortly.':sending?'⏳ Sending…':'📩 Send Message'}
-                   </button>
-                 </form>
-               </div>
-             </div>
-           </div>
-         </div>
+// ============================================================
+// HOW IT WORKS
+// ============================================================
+function HowItWorksSection() {
+  const [activeTab, setActiveTab] = useState('employer');
+  const [headerRef, headerVis] = useReveal();
+  const panels = { employer: HOW_IT_WORKS_EMPLOYER, candidate: HOW_IT_WORKS_CANDIDATE };
+  return (
+    <section className="section how-it-works">
+      <div className="container">
+        <div ref={headerRef} className="section-header">
+          <p className={`eyebrow section-header__eyebrow reveal${headerVis?' visible':''}`}>Our Process</p>
+          <h2 className={`display-md section-header__title reveal reveal-delay-1${headerVis?' visible':''}`}>How It Works</h2>
+          <p className={`section-header__subtitle reveal reveal-delay-2${headerVis?' visible':''}`}>A transparent process tailored to your role — whether you're hiring or seeking your next opportunity.</p>
+        </div>
+        <div className="hiw-tab-switcher">
+          <button className={`hiw-tab-btn${activeTab==='employer'?' active':''}`} onClick={()=>setActiveTab('employer')}><span className="hiw-tab-icon">🏢</span> I'm an Employer</button>
+          <button className={`hiw-tab-btn${activeTab==='candidate'?' active':''}`} onClick={()=>setActiveTab('candidate')}><span className="hiw-tab-icon">👤</span> I'm a Job Seeker</button>
+        </div>
+        <div className="hiw-panels">
+          {['employer','candidate'].map(tab=>(
+            <div key={tab} className={`hiw-panel${activeTab===tab?' active':''}`}>
+              <div className="hiw-panel-intro"><p className="eyebrow">{tab==='employer'?'For Employers':'For Job Seekers'}</p><p>{panels[tab].intro}</p></div>
+              <div className="how-it-works__grid">
+                {panels[tab].steps.map((step,i)=>(
+                  <div key={i} className="step-card"><div className="step-card__num">{step.step}</div><h3 className="step-card__title">{step.title}</h3><p className="step-card__text">{step.text}</p></div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
-         <div className="full-page-cta">
-           <div className="full-page-container" style={{textAlign:'center'}}>
-             <h2 style={{fontFamily:'var(--font-display)',fontSize:'clamp(1.8rem,3.5vw,2.8rem)',color:'var(--ivory)',marginBottom:'16px'}}>We Look Forward to <em style={{color:'var(--gold-mid)'}}>Hearing From You</em></h2>
-             <p style={{color:'rgba(255,255,255,.5)',marginBottom:'36px',fontSize:'16px',maxWidth:'440px',margin:'0 auto 36px'}}>Our team responds promptly. Reach out today and let's build something great together.</p>
-             <div style={{display:'flex',gap:'16px',justifyContent:'center',flexWrap:'wrap'}}>
-               <button className="btn-primary" onClick={onBack}><span>← Back to Home</span></button>
-               <a href="https://wa.me/2347047453599" target="_blank" rel="noopener noreferrer" className="btn-whatsapp-standalone">💬 WhatsApp Us Now</a>
-             </div>
-           </div>
-         </div>
-       </div>
-     );
-   }
+// ============================================================
+// TESTIMONIALS
+// ============================================================
+function TestimonialCard({ testimonial, delay }) {
+  const [ref, vis] = useReveal();
+  return (
+    <div ref={ref} className={`testimonial-card reveal${vis?' visible':''}`} style={{transitionDelay:`${delay}s`}}>
+      <div className="testimonial-card__stars">{'★'.repeat(testimonial.stars)}</div>
+      <p className="testimonial-card__text">"{testimonial.text}"</p>
+      <div className="testimonial-card__author">
+        <div className="testimonial-card__avatar">{testimonial.initials}</div>
+        <div><div className="testimonial-card__name">{testimonial.name}</div><div className="testimonial-card__role">{testimonial.role}</div></div>
+      </div>
+    </div>
+  );
+}
 
-   /* ══════════════════════════════════════════════════
-      CONTACT (home page minimal section)
-      ══════════════════════════════════════════════════ */
-   function Contact({ onViewDetails }) {
-     const ref = useReveal();
-     return (
-       <section className="contact-section-minimal" id="contact">
-         <div className="contact-minimal-inner">
-           <div className="reveal" ref={el=>ref(el,0)}>
-             <div className="section-label" style={{textAlign:'center'}}>Get In Touch</div>
-             <h2 className="section-title" style={{textAlign:'center',color:'var(--ivory)'}}>Let's <em>Work Together</em></h2>
-             <p className="section-desc" style={{textAlign:'center',maxWidth:'520px',margin:'0 auto 40px'}}>
-               Whether you're hiring, seeking your next opportunity, or exploring HR outsourcing — our team is ready. Reach out through the link below.
-             </p>
-           </div>
-           <div className="contact-minimal-cards reveal reveal-d1" ref={el=>ref(el,1)}>
-             <div className="contact-minimal-card">
-               <div className="contact-minimal-icon">📧</div>
-               <div className="contact-minimal-label">Email</div>
-               <div className="contact-minimal-val">info@jvgrecruitmentsolutions.com</div>
-             </div>
-             <div className="contact-minimal-card">
-               <div className="contact-minimal-icon">📞</div>
-               <div className="contact-minimal-label">Call / WhatsApp</div>
-               <div className="contact-minimal-val">+234 704 745 3599</div>
-             </div>
-             <div className="contact-minimal-card">
-               <div className="contact-minimal-icon">📍</div>
-               <div className="contact-minimal-label">Location</div>
-               <div className="contact-minimal-val">Abuja, FCT, Nigeria</div>
-             </div>
-           </div>
-           <div className="contact-minimal-cta reveal reveal-d2" ref={el=>ref(el,2)}>
-             <button className="contact-open-btn" onClick={onViewDetails}>
-               <div className="contact-open-btn-content">
-                 <div className="contact-open-btn-icon">✉️</div>
-                 <div className="contact-open-btn-text">
-                   <span className="contact-open-btn-title">Open Full Contact Page</span>
-                   <span className="contact-open-btn-sub">Send a message, view our details, hours &amp; FAQ</span>
-                 </div>
-               </div>
-               <div className="contact-open-btn-arrow">
-                 <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
-                   <path d="M4 10h12M10 4l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                 </svg>
-               </div>
-             </button>
-           </div>
-         </div>
-       </section>
-     );
-   }
+function TestimonialsSection() {
+  const [headerRef, headerVis] = useReveal();
+  return (
+    <section className="section testimonials">
+      <div className="container">
+        <div ref={headerRef} className="section-header">
+          <p className={`eyebrow section-header__eyebrow reveal${headerVis?' visible':''}`}>Client Stories</p>
+          <h2 className={`display-md section-header__title reveal reveal-delay-1${headerVis?' visible':''}`}>What Our Clients Say</h2>
+        </div>
+        <div className="testimonials__grid">
+          {TESTIMONIALS.map((t,i) => <TestimonialCard key={i} testimonial={t} delay={(i%3)*0.12}/>)}
+        </div>
+      </div>
+    </section>
+  );
+}
 
-   /* ══════════════════════════════════════════════════
-      FOOTER
-      ══════════════════════════════════════════════════ */
-   function Footer({ secretTap }) {
-     const cols = {
-       'Our Services': [['Recruitment & Staffing','#services'],['HR Outsourcing','#services'],['Hotel Staffing','#services'],['Job Placement','#services'],['Post a Job','#contact']],
-       'Quick Links':  [['About Us','#about'],['Why Choose JVG','#why-jvg'],['How It Works','#how-it-works'],['Job Openings','#jobs'],['Contact Us','#contact']],
-       'Industries':   [['Hotels & Hospitality','#jobs'],['Finance & Banking','#jobs'],['Engineering','#jobs'],['Sales & Marketing','#jobs'],['Healthcare','#jobs']],
-     };
-     return (
-       <footer className="footer">
-         <div className="footer-grid">
-           <div>
-             <a href="#home" className="nav-logo" style={{marginBottom:'4px',display:'inline-flex'}}>
-               <div className="nav-logo-mark">JVG</div>
-               <div><span className="nav-logo-name">JVG Recruitment Solutions</span><span className="nav-logo-sub">Employment Solutions Nigeria</span></div>
-             </a>
-             <p className="footer-brand-desc">Connecting employers with performance-ready talent across Nigeria. Specialists in hotel staffing, corporate recruitment, and HR outsourcing for businesses that can't afford hiring mistakes.</p>
-             <span className="footer-tagline">✦ Pre-Vetted Staff. Delivered in Days.</span>
-           </div>
-           {Object.entries(cols).map(([heading,links])=>(
-             <div className="footer-col" key={heading}>
-               <h6>{heading}</h6>
-               <ul>{links.map(([label,href])=><li key={label}><a href={href}>{label}</a></li>)}</ul>
-             </div>
-           ))}
-         </div>
-         <div className="footer-bottom">
-           <p>{secretTap} {new Date().getFullYear()} JVG Recruitment Solutions. All rights reserved.</p>
-           <p>Recruitment Agency Nigeria <span className="gold-dot">·</span> Hotel Staffing Abuja <span className="gold-dot">·</span> HR Outsourcing Nigeria</p>
-         </div>
-       </footer>
-     );
-   }
-   
-   /* ══════════════════════════════════════════════════
-      HIDDEN ADMIN ACCESS
-      ══════════════════════════════════════════════════ */
-   const SECRET_SEQUENCE = 'jvgadmin862';
-   
-   function useSecretAccess(onUnlock) {
-     const bufferRef = useRef('');
-     useEffect(() => {
-       const checkHash = () => { if(window.location.hash==='#jvg-admin'){window.history.replaceState(null,'',window.location.pathname);onUnlock();} };
-       checkHash();
-       window.addEventListener('hashchange',checkHash);
-       const handleKey = (e) => {
-         if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
-         bufferRef.current = (bufferRef.current+e.key).slice(-SECRET_SEQUENCE.length);
-         if(bufferRef.current===SECRET_SEQUENCE){bufferRef.current='';onUnlock();}
-       };
-       window.addEventListener('keydown',handleKey);
-       return ()=>{ window.removeEventListener('hashchange',checkHash); window.removeEventListener('keydown',handleKey); };
-     },[onUnlock]);
-   }
-   
-   function SecretTap({ onUnlock }) {
-     const countRef = useRef(0);
-     const timerRef = useRef(null);
-     const handleClick = () => {
-       countRef.current+=1;
-       clearTimeout(timerRef.current);
-       timerRef.current = setTimeout(()=>{countRef.current=0;},3000);
-       if(countRef.current>=5){countRef.current=0;onUnlock();}
-     };
-     return <span onClick={handleClick} style={{cursor:'default',userSelect:'none'}} aria-hidden="true">©</span>;
-   }
-   
-   /* ══════════════════════════════════════════════════
-      ROOT APP
-      ══════════════════════════════════════════════════ */
-   function App() {
-     const [jobs,      setJobs]      = useState(loadJobs);
-     const [adminOpen, setAdminOpen] = useState(false);
-     const [page,      setPage]      = useState('home'); // 'home' | 'jobs' | 'about' | 'contact'
-     const openAdmin = useCallback(()=>setAdminOpen(true),[]);
-     useSecretAccess(openAdmin);
+// ============================================================
+// PAGE HERO
+// ============================================================
+function PageHeroStatItem({ stat, delay }) {
+  const [ref, vis] = useReveal();
+  const display = useCountUp(stat.value, 3200, vis);
+  return (
+    <div ref={ref} className={`page-hero__stat reveal${vis?' visible':''}`} style={{transitionDelay:`${delay}s`}}>
+      <div className="page-hero__stat-number count-up-value">{display}</div>
+      <div className="page-hero__stat-label">{stat.label}</div>
+    </div>
+  );
+}
 
-     const goHome = () => { setPage('home'); window.scrollTo(0,0); };
-     const goToContact = () => {
-       setPage('contact');
-       window.scrollTo(0,0);
-       setTimeout(() => document.getElementById('contact-form')?.scrollIntoView({behavior:'smooth', block:'start'}), 350);
-     };
-     useEffect(() => { window.__goToContact = goToContact; return () => { delete window.__goToContact; }; }, []);
-   
-     if (page === 'jobs')    return <JobsPage jobs={jobs} onBack={goHome} />;
-     if (page === 'about')   return <AboutPage onBack={goHome} />;
-     if (page === 'contact') return <ContactPage onBack={goHome} />;
+function PageHero({ eyebrow, title, subtitle, stats }) {
+  const [heroRef, heroVis] = useReveal();
+  return (
+    <section className="page-hero">
+      <div className="container" ref={heroRef}>
+        <p className={`eyebrow reveal${heroVis?' visible':''}`} style={{marginBottom:'1rem'}}>{eyebrow}</p>
+        <h1 className={`display-lg reveal reveal-delay-1${heroVis?' visible':''}`}>{title}</h1>
+        {subtitle && <p className={`reveal reveal-delay-2${heroVis?' visible':''}`} style={{fontFamily:'var(--font-body)',fontSize:'1.05rem',fontWeight:300,color:'var(--text-secondary)',maxWidth:'540px',margin:'1rem auto 0',lineHeight:1.75}}>{subtitle}</p>}
+        {stats && (
+          <div className="page-hero__stats" style={{marginTop:'3rem'}}>
+            {stats.map((s,i) => <PageHeroStatItem key={i} stat={s} delay={i*0.1}/>)}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
 
-     return (
-       <>
-         <Navbar />
-         <Hero />
-         <Benefits />
-         <About onViewMore={() => setPage('about')} />
-         <Services />
-         <HowItWorks />
-         <Jobs jobs={jobs} onViewAll={() => setPage('jobs')} />
-         <Testimonials />
-         <CtaBanner />
-         <Contact onViewDetails={() => setPage('contact')} />
-         <Footer secretTap={<SecretTap onUnlock={openAdmin}/>} />
-         {adminOpen&&<AdminPanel jobs={jobs} setJobs={setJobs} onClose={()=>setAdminOpen(false)}/>}
-       </>
-     );
-   }
-   
-   const root = ReactDOM.createRoot(document.getElementById('root'));
-   root.render(<App />);
+// ============================================================
+// CONTACT FORM
+// ============================================================
+function ContactForm({ jobTitle }) {
+  const [tab, setTab] = useState('employer');
+  const [status, setStatus] = useState('');
+  const [statusMsg, setStatusMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const [empForm, setEmpForm] = useState({ name:'', company:'', email:'', phone:'', role:jobTitle||'', message:'' });
+  const [hrForm,  setHrForm]  = useState({ name:'', email:'', phone:'', position:jobTitle||'', experience:'', cover:'' });
+  const fileRef = useRef();
+  const [fileName, setFileName] = useState('');
+
+  const saveEnquiry = (type, data) => {
+    const all = JSON.parse(localStorage.getItem('jvg_enquiries') || '[]');
+    all.unshift({ id:Date.now(), type, ...data, date:new Date().toISOString(), read:false });
+    localStorage.setItem('jvg_enquiries', JSON.stringify(all));
+  };
+
+  const setFeedback = (s, m) => { setStatus(s); setStatusMsg(m); };
+
+  const submitEmployer = async () => {
+    const { name, email, message } = empForm;
+    if (!name.trim() || !email.trim() || !message.trim()) {
+      setFeedback('error', 'Please fill in Name, Email and Message — they are required.'); return;
+    }
+    if (!email.includes('@') || !email.includes('.')) {
+      setFeedback('error', 'Please enter a valid email address.'); return;
+    }
+    setBusy(true);
+    setFeedback('loading', 'Sending your enquiry…');
+    saveEnquiry('employer', { name:empForm.name, email:empForm.email, company:empForm.company, role:empForm.role, phone:empForm.phone, message:empForm.message });
+    try {
+      await sendEmail(EMAILJS_TPL_EMPLOYER, {
+        from_name:   empForm.name,
+        company:     empForm.company  || 'Not provided',
+        from_email:  empForm.email,
+        phone:       empForm.phone    || 'Not provided',
+        role_needed: empForm.role     || 'Not specified',
+        message:     empForm.message,
+        to_name:     'JVG Recruitment Team',
+        reply_to:    empForm.email,
+      });
+      setFeedback('success', "Enquiry sent! We'll be in touch within 24 hours.");
+    } catch (e) {
+      console.warn('Employer EmailJS error:', e.message || e);
+      setFeedback('success', "Enquiry received! We'll be in touch within 24 hours.");
+    }
+    setBusy(false);
+    setEmpForm({ name:'', company:'', email:'', phone:'', role:'', message:'' });
+  };
+
+  const submitHR = async () => {
+    const { name, email, position } = hrForm;
+    if (!name.trim() || !email.trim() || !position.trim()) {
+      setFeedback('error', 'Please fill in Name, Email and Position — they are required.'); return;
+    }
+    if (!email.includes('@') || !email.includes('.')) {
+      setFeedback('error', 'Please enter a valid email address.'); return;
+    }
+    setBusy(true);
+    setFeedback('loading', 'Submitting your application…');
+    saveEnquiry('candidate', { name:hrForm.name, email:hrForm.email, position:hrForm.position, phone:hrForm.phone, experience:hrForm.experience, cover:hrForm.cover });
+    try {
+      await sendEmail(EMAILJS_TPL_CANDIDATE, {
+        from_name:    hrForm.name,
+        from_email:   hrForm.email,
+        phone:        hrForm.phone      || 'Not provided',
+        position:     hrForm.position,
+        experience:   hrForm.experience || 'Not specified',
+        cover_letter: hrForm.cover      || 'Not provided',
+        message:      hrForm.cover      || 'Application submitted via website.',
+        to_name:      'JVG HR Team',
+        reply_to:     hrForm.email,
+      });
+      setFeedback('success', "Application received! We'll review and be in touch shortly.");
+    } catch (e) {
+      console.warn('Candidate EmailJS error:', e.message || e);
+      setFeedback('success', "Application received! We'll review and be in touch shortly.");
+    }
+    setBusy(false);
+    setHrForm({ name:'', email:'', phone:'', position:'', experience:'', cover:'' });
+    setFileName('');
+  };
+
+  return (
+    <div className="form-card">
+      <div className="form-tabs">
+        <button className={`form-tab${tab==='employer'?' active':''}`} onClick={()=>{setTab('employer');setFeedback('','');}}>🏢 I'm Hiring</button>
+        <button className={`form-tab${tab==='candidate'?' active':''}`} onClick={()=>{setTab('candidate');setFeedback('','');}}>👤 I'm Job Seeking</button>
+      </div>
+
+      {tab === 'employer' ? (
+        <>
+          <div className="form-row">
+            <div className="form-group"><label className="form-label">Full Name *</label><input className="form-input" placeholder="John Adeyemi" value={empForm.name} disabled={busy} onChange={e=>setEmpForm(p=>({...p,name:e.target.value}))}/></div>
+            <div className="form-group"><label className="form-label">Company</label><input className="form-input" placeholder="Acme Corp Nigeria" value={empForm.company} disabled={busy} onChange={e=>setEmpForm(p=>({...p,company:e.target.value}))}/></div>
+          </div>
+          <div className="form-row">
+            <div className="form-group"><label className="form-label">Email Address *</label><input className="form-input" type="email" placeholder="john@company.com" value={empForm.email} disabled={busy} onChange={e=>setEmpForm(p=>({...p,email:e.target.value}))}/></div>
+            <div className="form-group"><label className="form-label">Phone</label><input className="form-input" placeholder="+234 800 000 0000" value={empForm.phone} disabled={busy} onChange={e=>setEmpForm(p=>({...p,phone:e.target.value}))}/></div>
+          </div>
+          <div className="form-group"><label className="form-label">Role(s) You're Hiring For</label><input className="form-input" placeholder="e.g. Finance Manager, Sales Lead" value={empForm.role} disabled={busy} onChange={e=>setEmpForm(p=>({...p,role:e.target.value}))}/></div>
+          <div className="form-group"><label className="form-label">Tell Us More *</label><textarea className="form-textarea" placeholder="Describe the role, timeline, key requirements…" value={empForm.message} disabled={busy} onChange={e=>setEmpForm(p=>({...p,message:e.target.value}))}/></div>
+          <button className="btn btn--primary w-full" onClick={submitEmployer} disabled={busy}>{busy ? '⏳ Sending…' : 'Send Enquiry →'}</button>
+        </>
+      ) : (
+        <>
+          <div className="form-row">
+            <div className="form-group"><label className="form-label">Full Name *</label><input className="form-input" placeholder="Jane Okafor" value={hrForm.name} disabled={busy} onChange={e=>setHrForm(p=>({...p,name:e.target.value}))}/></div>
+            <div className="form-group"><label className="form-label">Email Address *</label><input className="form-input" type="email" placeholder="jane@email.com" value={hrForm.email} disabled={busy} onChange={e=>setHrForm(p=>({...p,email:e.target.value}))}/></div>
+          </div>
+          <div className="form-row">
+            <div className="form-group"><label className="form-label">Phone</label><input className="form-input" placeholder="+234 800 000 0000" value={hrForm.phone} disabled={busy} onChange={e=>setHrForm(p=>({...p,phone:e.target.value}))}/></div>
+            <div className="form-group"><label className="form-label">Position Sought *</label><input className="form-input" placeholder="e.g. Marketing Manager" value={hrForm.position} disabled={busy} onChange={e=>setHrForm(p=>({...p,position:e.target.value}))}/></div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Years of Experience</label>
+            <select className="form-select" value={hrForm.experience} disabled={busy} onChange={e=>setHrForm(p=>({...p,experience:e.target.value}))}>
+              <option value="">Select…</option>
+              <option>0–2 years (Entry level)</option>
+              <option>3–5 years (Mid-level)</option>
+              <option>6–10 years (Senior)</option>
+              <option>10+ years (Executive)</option>
+            </select>
+          </div>
+          <div className="form-group"><label className="form-label">Cover Letter / Notes</label><textarea className="form-textarea" placeholder="Tell us about yourself and what you're looking for…" value={hrForm.cover} disabled={busy} onChange={e=>setHrForm(p=>({...p,cover:e.target.value}))}/></div>
+          <div className="form-group">
+            <div className="form-upload" onClick={()=>fileRef.current&&fileRef.current.click()}>
+              <div className="form-upload__icon">📎</div>
+              <div className="form-upload__text">{fileName || 'Upload your CV (PDF, DOCX — max 5MB)'}</div>
+              <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" style={{display:'none'}} onChange={e=>{if(e.target.files[0]) setFileName(e.target.files[0].name);}}/>
+            </div>
+          </div>
+          <button className="btn btn--primary w-full" onClick={submitHR} disabled={busy}>{busy ? '⏳ Submitting…' : 'Submit Application →'}</button>
+        </>
+      )}
+
+      {statusMsg && (
+        <div className={`form-status form-status--${status}`}>
+          {status === 'loading' ? '⏳ ' : status === 'success' ? '✅ ' : '❌ '}
+          {statusMsg}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// JOB CARD — Refined luxury design
+// ============================================================
+function JobCard({ job, onApply, onLearnMore, delay }) {
+  const [ref, vis] = useReveal();
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      ref={ref}
+      className={`job-card reveal${vis?' visible':''}`}
+      style={{transitionDelay:`${delay}s`}}
+      onMouseEnter={()=>setHovered(true)}
+      onMouseLeave={()=>setHovered(false)}
+    >
+      {/* Top accent line */}
+      <div className="job-card__accent-line"/>
+
+      {/* Header band */}
+      <div className="job-card__header">
+        <div className="job-card__industry-row">
+          <div className="job-card__icon-wrap">{getJobIcon(job.industry)}</div>
+          <div className="job-card__industry-label">{job.industry}</div>
+        </div>
+        <div className="job-card__type-pill">{job.type}</div>
+      </div>
+
+      {/* Body */}
+      <div className="job-card__body">
+        <h3 className="job-card__title">{job.title}</h3>
+        <div className="job-card__meta">
+          <span className="job-card__meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            {job.location}
+          </span>
+        </div>
+        <p className="job-card__excerpt">{job.excerpt}</p>
+      </div>
+
+      {/* Salary + CTA footer */}
+      <div className="job-card__footer">
+        {job.salary && (
+          <div className="job-card__salary-block">
+            <span className="job-card__salary-label">Salary</span>
+            <span className="job-card__salary-value">{job.salary}</span>
+          </div>
+        )}
+        <div className="job-card__actions">
+          <button className="job-card__btn-secondary" onClick={()=>onLearnMore(job)}>Details</button>
+          <button className="job-card__btn-primary" onClick={()=>onApply(job)}>Apply Now</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// PAGES
+// ============================================================
+function HomePage({ setPage }) {
+  return <><HeroSection setPage={setPage}/><BenefitsSection/><AboutSection/><ServicesSection setPage={setPage}/><HowItWorksSection/><TestimonialsSection/></>;
+}
+
+function AboutPage({ setPage }) {
+  const [bodyRef, bodyVis] = useReveal();
+  return (
+    <>
+      <PageHero eyebrow="Our Story" title="Nigeria's Most Trusted Talent Partner" subtitle="A decade of connecting the right people with the right organisations." stats={ABOUT_PAGE_STATS}/>
+      <section className="section">
+        <div className="container">
+          <div className="about__grid">
+            <div ref={bodyRef}>
+              <p className={`eyebrow reveal${bodyVis?' visible':''}`} style={{marginBottom:'1rem'}}>Our Mission</p>
+              <h2 className={`display-md reveal reveal-delay-1${bodyVis?' visible':''}`} style={{marginBottom:'1.5rem'}}>Talent Is Our Business</h2>
+              <p className={`about__body reveal reveal-delay-2${bodyVis?' visible':''}`}>JVG Recruitment Solutions was founded with a clear vision: to raise the standard of recruitment in Nigeria. Too many businesses waste time on unsuitable candidates, and too many professionals miss opportunities because they can't find the right representation.</p>
+              <p className={`about__body reveal reveal-delay-3${bodyVis?' visible':''}`}>We built JVG to fix that. Our team of specialist consultants brings domain expertise across hospitality, finance, healthcare, oil and gas, FMCG, and the public sector. We don't just search databases — we build real relationships with both employers and candidates over time.</p>
+              <p className={`about__body reveal reveal-delay-4${bodyVis?' visible':''}`}>The result? Placements that stick, careers that flourish, and businesses that grow.</p>
+              <div style={{marginTop:'2.5rem'}}><button className="btn btn--primary" onClick={()=>setPage('contact')}>Work With Us →</button></div>
+            </div>
+            <div>
+              <div className="about__visual-card">
+                <div className="eyebrow" style={{marginBottom:'1rem'}}>What Drives Us</div>
+                <h3 className="display-sm" style={{marginBottom:'1rem'}}>Our Core Values</h3>
+                <div style={{display:'flex',flexDirection:'column',gap:'1rem',marginTop:'1.5rem'}}>
+                  {[{icon:'🤝',title:'Integrity',text:'We operate with full transparency — no hidden fees, no false promises, no shortcuts.'},{icon:'⚡',title:'Speed',text:'We move fast without cutting corners. Your urgency is our priority.'},{icon:'🎯',title:'Precision',text:'Every candidate we present is thoroughly assessed — technically and culturally.'},{icon:'🌍',title:'Partnership',text:'We become an extension of your team, not just a vendor you call once.'},{icon:'🏆',title:'Excellence',text:'We hold ourselves to the highest standard in everything we deliver.'}].map((v,i)=>(
+                    <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'0.85rem',padding:'1rem',background:'var(--bg-secondary)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
+                      <span style={{fontSize:'1.4rem',flexShrink:0}}>{v.icon}</span>
+                      <div><div style={{fontFamily:'var(--font-display)',fontWeight:600,fontSize:'0.95rem',marginBottom:'0.25rem'}}>{v.title}</div><div style={{fontFamily:'var(--font-body)',fontSize:'0.82rem',fontWeight:300,color:'var(--text-secondary)',lineHeight:1.65}}>{v.text}</div></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <LeadershipSection/>
+      <TestimonialsSection/>
+    </>
+  );
+}
+
+function JobsPage({ setPage }) {
+  const [jobs, setJobs] = useState(()=>{ const stored=JSON.parse(localStorage.getItem('jvg_jobs')||'[]'); const ids=new Set(stored.map(j=>j.id)); return [...stored,...SAMPLE_JOBS.filter(j=>!ids.has(j.id))]; });
+  const [filter, setFilter] = useState('All');
+  const [modalJob, setModalJob] = useState(null);
+  const [applyJob, setApplyJob] = useState(null);
+  const [search, setSearch] = useState('');
+
+  useEffect(()=>{
+    const sync = () => { const stored=JSON.parse(localStorage.getItem('jvg_jobs')||'[]'); const ids=new Set(stored.map(j=>j.id)); setJobs([...stored,...SAMPLE_JOBS.filter(j=>!ids.has(j.id))]); };
+    window.addEventListener('jvg_jobs_updated', sync);
+    return () => window.removeEventListener('jvg_jobs_updated', sync);
+  },[]);
+
+  const industries = ['All',...Array.from(new Set(jobs.map(j=>j.industry)))];
+  const filtered = jobs.filter(job=>{ const t=search.trim().toLowerCase(); const ms=!t||(job.title.toLowerCase().includes(t)||job.location.toLowerCase().includes(t)||job.industry.toLowerCase().includes(t)); return ms&&(filter==='All'||job.industry===filter); });
+
+  return (
+    <>
+      <PageHero eyebrow="Opportunities" title="Find Your Next Role" subtitle="Browse current openings across Nigeria's leading employers." stats={JOBS_PAGE_STATS}/>
+      <section className="section"><div className="container">
+        <div className="jobs__search-bar">
+          <input className="form-input" placeholder="Search by title, location or industry…" value={search} onChange={e=>setSearch(e.target.value)} style={{maxWidth:'380px'}}/>
+          {search&&<button className="btn btn--ghost btn--sm" onClick={()=>setSearch('')}>✕ Clear</button>}
+          {search&&<span style={{fontFamily:'var(--font-body)',fontSize:'0.82rem',color:'var(--text-muted)',alignSelf:'center'}}>{filtered.length} result{filtered.length!==1?'s':''} found</span>}
+        </div>
+        <div className="jobs__filters">{industries.map(ind=><button key={ind} className={`filter-btn${filter===ind?' active':''}`} onClick={()=>setFilter(ind)}>{ind}</button>)}</div>
+        {filtered.length===0?(
+          <div className="empty-state"><div className="empty-state__icon">🔍</div><h3 className="empty-state__title">No roles found</h3><p className="empty-state__text">{search?`No jobs match "${search}" — try a different keyword`:'Try adjusting your filter'}</p></div>
+        ):(
+          <div className="jobs__grid">{filtered.map((job,i)=><JobCard key={job.id} job={job} delay={(i%3)*0.1} onApply={setApplyJob} onLearnMore={setModalJob}/>)}</div>
+        )}
+        <div style={{textAlign:'center',marginTop:'3rem'}}><p style={{fontFamily:'var(--font-body)',color:'var(--text-muted)',marginBottom:'1rem',fontSize:'0.88rem',fontWeight:300}}>Don't see what you're looking for? Send us a speculative application.</p><button className="btn btn--outline" onClick={()=>setPage('contact')}>Register Your Interest →</button></div>
+      </div></section>
+
+      {modalJob&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setModalJob(null)}>
+          <div className="modal modal--job-detail">
+            <div className="modal__header">
+              <div><span className="job-card__type-pill" style={{marginBottom:'0.75rem',display:'inline-flex'}}>{modalJob.type}</span><h2 className="modal__title" style={{marginTop:'0.75rem'}}>{modalJob.title}</h2></div>
+              <button className="modal__close" onClick={()=>setModalJob(null)}>✕</button>
+            </div>
+            <div className="job-card__meta" style={{marginBottom:'0.75rem'}}><span>📍 {modalJob.location}</span><span>🏢 {modalJob.industry}</span></div>
+            {modalJob.salary&&<div style={{marginBottom:'1.5rem'}}><span className="job-card__salary-value" style={{fontSize:'1rem'}}>💰 {modalJob.salary}</span></div>}
+            {modalJob.description?<div className="job-description" dangerouslySetInnerHTML={{__html:modalJob.description}}/>:<p style={{fontFamily:'var(--font-body)',fontSize:'0.92rem',fontWeight:300,color:'var(--text-secondary)',lineHeight:1.75,marginBottom:'2rem'}}>{modalJob.excerpt}</p>}
+            <div style={{display:'flex',gap:'0.75rem',marginTop:'2rem',flexWrap:'wrap'}}><button className="btn btn--primary" style={{flex:1}} onClick={()=>{setModalJob(null);setApplyJob(modalJob);}}>Apply for This Role →</button></div>
+          </div>
+        </div>
+      )}
+      {applyJob&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setApplyJob(null)}>
+          <div className="modal"><div className="modal__header"><div><p className="eyebrow" style={{marginBottom:'0.5rem'}}>Apply Now</p><h2 className="modal__title">{applyJob.title}</h2></div><button className="modal__close" onClick={()=>setApplyJob(null)}>✕</button></div><ContactForm jobTitle={applyJob.title}/></div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function ContactPage() {
+  const [colRef, colVis] = useReveal();
+  return (
+    <>
+      <PageHero eyebrow="Get In Touch" title="Let's Build Something Great" subtitle="Whether you're hiring or job seeking, we're ready to help." stats={CONTACT_PAGE_STATS}/>
+      <section className="section"><div className="container"><div className="contact__grid">
+        <div ref={colRef}>
+          <h2 className={`contact__info-title reveal${colVis?' visible':''}`}>Talk to a Consultant</h2>
+          <p className={`contact__info-text reveal reveal-delay-1${colVis?' visible':''}`}>Our team is available Monday to Friday, 8am–6pm WAT. We aim to respond to all enquiries within 24 hours.</p>
+          <div className={`contact__info-items reveal reveal-delay-2${colVis?' visible':''}`}>
+            {[
+              {icon:'📧',label:'Email',value:'info@jvgrecruitmentsolutions.com'},
+              {icon:'📞',label:'Phone',value:'+234 704 745 3599'},
+              {icon:'📍',label:'Office',value:'11, Aliyu Mohammed Road TAK Continental Estate Life Camp FCT Abuja'},
+              {icon:'🕐',label:'Hours',value:'Mon–Fri, 8:00am – 6:00pm WAT'}
+            ].map((item,i)=>(
+              <div key={i} className="contact__info-item"><div className="contact__info-icon">{item.icon}</div><div><div className="contact__info-label">{item.label}</div><div className="contact__info-value">{item.value}</div></div></div>
+            ))}
+          </div>
+        </div>
+        <div><ContactForm/></div>
+      </div></div></section>
+    </>
+  );
+}
+
+// ============================================================
+// ADMIN LOGIN
+// ============================================================
+function AdminLogin({ onLogin }) {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [show, setShow] = useState(false);
+
+  const handleLogin = () => {
+    if (password === ADMIN_PASSWORD) { onLogin(); }
+    else { setError('Incorrect password. Please try again.'); setPassword(''); }
+  };
+
+  return (
+    <div className="admin-login">
+      <div className="admin-login__card">
+        <div className="admin-login__logo">JVG</div>
+        <h2 className="admin-login__title">Admin Access</h2>
+        <p className="admin-login__sub">Enter your admin password to continue</p>
+        {error && <div className="admin-login__error">⚠️ {error}</div>}
+        <div className="form-group" style={{marginBottom:'1.25rem',textAlign:'left',position:'relative'}}>
+          <label className="form-label">Password</label>
+          <input
+            className="form-input"
+            type={show?'text':'password'}
+            placeholder="Enter admin password"
+            value={password}
+            onChange={e=>{setPassword(e.target.value);setError('');}}
+            onKeyDown={e=>e.key==='Enter'&&handleLogin()}
+            style={{paddingRight:'3rem'}}
+          />
+          <button onClick={()=>setShow(p=>!p)} style={{position:'absolute',right:'0.75rem',top:'2.1rem',background:'none',border:'none',cursor:'pointer',fontSize:'1.1rem',color:'var(--text-muted)'}}>{show?'🙈':'👁️'}</button>
+        </div>
+        <button className="btn btn--primary w-full" onClick={handleLogin}>Sign In →</button>
+        <p style={{marginTop:'1.5rem',fontFamily:'var(--font-body)',fontSize:'0.78rem',color:'var(--text-muted)',fontWeight:300}}><strong>🔒 Authorised personnel only. </strong>For access issues, contact your system administrator</p>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// ENQUIRY DETAIL MODAL
+// ============================================================
+function EnquiryDetailModal({ enquiry, onClose, onMarkRead, onDelete }) {
+  if (!enquiry) return null;
+  return (
+    <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal">
+        <div className="modal__header">
+          <div>
+            <span className={`badge badge--${enquiry.type==='employer'?'employer':'candidate'}`} style={{marginBottom:'0.5rem',display:'inline-flex'}}>{enquiry.type==='employer'?'Employer Enquiry':'Candidate Application'}</span>
+            <h2 className="modal__title" style={{marginTop:'0.4rem'}}>{enquiry.name}</h2>
+          </div>
+          <button className="modal__close" onClick={onClose}>✕</button>
+        </div>
+        <div className="enquiry-detail">
+          <div className="enquiry-detail__field"><div className="enquiry-detail__label">Email</div><div className="enquiry-detail__value"><a href={`mailto:${enquiry.email}`} style={{color:'var(--gold)'}}>{enquiry.email}</a></div></div>
+          {enquiry.phone && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Phone</div><div className="enquiry-detail__value">{enquiry.phone}</div></div>}
+          {enquiry.company && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Company</div><div className="enquiry-detail__value">{enquiry.company}</div></div>}
+          {enquiry.role && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Role Needed</div><div className="enquiry-detail__value">{enquiry.role}</div></div>}
+          {enquiry.position && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Position Sought</div><div className="enquiry-detail__value">{enquiry.position}</div></div>}
+          {enquiry.experience && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Experience</div><div className="enquiry-detail__value">{enquiry.experience}</div></div>}
+          {enquiry.message && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Message</div><div className="enquiry-detail__value" style={{whiteSpace:'pre-wrap'}}>{enquiry.message}</div></div>}
+          {enquiry.cover && <div className="enquiry-detail__field"><div className="enquiry-detail__label">Cover Letter</div><div className="enquiry-detail__value" style={{whiteSpace:'pre-wrap'}}>{enquiry.cover}</div></div>}
+          <div className="enquiry-detail__field"><div className="enquiry-detail__label">Received</div><div className="enquiry-detail__value">{new Date(enquiry.date).toLocaleString('en-GB',{dateStyle:'full',timeStyle:'short'})}</div></div>
+        </div>
+        <div style={{display:'flex',gap:'0.75rem',marginTop:'1.5rem',flexWrap:'wrap'}}>
+          <a href={`mailto:${enquiry.email}?subject=Re: Your enquiry — JVG Recruitment`} className="btn btn--primary btn--sm">Reply by Email</a>
+          {!enquiry.read && <button className="btn btn--ghost btn--sm" onClick={()=>{onMarkRead(enquiry.id);onClose();}}>✓ Mark as Read</button>}
+          <button className="btn btn--danger btn--sm" onClick={()=>{onDelete(enquiry.id);onClose();}}>🗑️ Delete</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// ADMIN STAT CARD
+// ============================================================
+function AdminStatCard({ icon, label, value, colour, delay }) {
+  const [ref, vis] = useReveal();
+  const display = useCountUp(String(value), 1800, vis);
+  return (
+    <div ref={ref} className={`admin-stat-card reveal${vis?' visible':''}`} style={{transitionDelay:`${delay}s`}}>
+      <div className={`admin-stat-icon admin-stat-icon--${colour}`}>{icon}</div>
+      <div className="admin-stat-info">
+        <div className="admin-stat-number count-up-value">{display}</div>
+        <div className="admin-stat-label">{label}</div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// ADMIN PANEL — Subscribers section REMOVED
+// ============================================================
+function AdminPanel({ onClose, toggleTheme, theme }) {
+  const [activeSection, setActiveSection] = useState('dashboard');
+  const [enquiries, setEnquiries] = useState(()=>JSON.parse(localStorage.getItem('jvg_enquiries')||'[]'));
+  const [customJobs, setCustomJobs] = useState(()=>JSON.parse(localStorage.getItem('jvg_jobs')||'[]'));
+  const [showJobForm, setShowJobForm] = useState(false);
+  const [editingJob, setEditingJob] = useState(null);
+  const [enquiryTab, setEnquiryTab] = useState('all');
+  const [viewEnquiry, setViewEnquiry] = useState(null);
+  const [jobSearch, setJobSearch] = useState('');
+
+  const emptyJob = { title:'', type:'Permanent', location:'', industry:'', salaryAmount:'', excerpt:'', description:'' };
+  const [jobForm, setJobForm] = useState(emptyJob);
+
+  const allJobs = [...customJobs, ...SAMPLE_JOBS.filter(j=>!new Set(customJobs.map(c=>c.id)).has(j.id))];
+  const filteredAdminJobs = jobSearch.trim() ? allJobs.filter(j=>j.title.toLowerCase().includes(jobSearch.toLowerCase())||j.location.toLowerCase().includes(jobSearch.toLowerCase())||j.industry.toLowerCase().includes(jobSearch.toLowerCase())) : allJobs;
+
+  const unread = enquiries.filter(e=>!e.read).length;
+  const empEnquiries = enquiries.filter(e=>e.type==='employer');
+  const candEnquiries = enquiries.filter(e=>e.type==='candidate');
+
+  // No subscribers nav item
+  const navItems = [
+    { id:'dashboard', icon:'📊', label:'Dashboard' },
+    { id:'jobs', icon:'💼', label:'Job Listings', badge: allJobs.length },
+    { id:'enquiries', icon:'📋', label:'Enquiries', badge: unread||null },
+  ];
+
+  const persistEnquiries = (updated) => { setEnquiries(updated); localStorage.setItem('jvg_enquiries',JSON.stringify(updated)); };
+  const markRead = id => persistEnquiries(enquiries.map(e=>e.id===id?{...e,read:true}:e));
+  const deleteEnquiry = id => persistEnquiries(enquiries.filter(e=>e.id!==id));
+  const markAllRead = () => persistEnquiries(enquiries.map(e=>({...e,read:true})));
+
+  const persistJobs = (updated) => {
+    setCustomJobs(updated);
+    localStorage.setItem('jvg_jobs',JSON.stringify(updated));
+    window.dispatchEvent(new Event('jvg_jobs_updated'));
+  };
+
+  // Build the salary string with the ₦ prefix baked in
+  const buildSalary = (form) => {
+    if (!form.salaryAmount || !form.salaryAmount.trim()) return '';
+    const amt = form.salaryAmount.trim();
+    // If user typed a full string already starting with ₦, use as-is
+    if (amt.startsWith('₦')) return amt;
+    return `₦${amt}`;
+  };
+
+  const saveJob = () => {
+    if (!jobForm.title||!jobForm.location) { alert('Job title and location are required.'); return; }
+    const salary = buildSalary(jobForm);
+    const jobData = { title:jobForm.title, type:jobForm.type, location:jobForm.location, industry:jobForm.industry, salary, excerpt:jobForm.excerpt, description:jobForm.description };
+    const updated = editingJob
+      ? customJobs.map(j=>j.id===editingJob.id?{...jobData,id:j.id}:j)
+      : [{...jobData,id:Date.now()},...customJobs];
+    persistJobs(updated);
+    setJobForm(emptyJob); setShowJobForm(false); setEditingJob(null);
+  };
+
+  const editJob = job => {
+    // Strip the ₦ prefix when loading into the salaryAmount field for editing
+    const raw = job.salary ? job.salary.replace(/^₦/,'') : '';
+    setJobForm({...job, salaryAmount: raw});
+    setEditingJob(job);
+    setShowJobForm(true);
+    setActiveSection('jobs');
+  };
+  const deleteJob = id => { if (!confirm('Delete this job listing?')) return; persistJobs(customJobs.filter(j=>j.id!==id)); };
+  const duplicateJob = job => { persistJobs([{...job,id:Date.now(),title:job.title+' (Copy)'},...customJobs]); };
+
+  const filteredEnquiries = enquiryTab==='all'?enquiries:enquiryTab==='employer'?empEnquiries:candEnquiries;
+
+  const statCards = [
+    { icon:'🏢', label:'Employer Enquiries',     value:empEnquiries.length, colour:'gold'  },
+    { icon:'👤', label:'Candidate Applications', value:candEnquiries.length, colour:'blue'  },
+    { icon:'🔔', label:'Unread Messages',         value:unread,              colour:'red'   },
+    { icon:'💼', label:'Active Job Listings',     value:allJobs.length,      colour:'green' },
+  ];
+
+  return (
+    <div className="admin-shell">
+      <aside className="admin-sidebar">
+        <div className="admin-sidebar__brand">
+          <div className="navbar__logo-mark" style={{width:36,height:36,fontSize:'0.9rem'}}>JVG</div>
+          <span>Admin Panel</span>
+        </div>
+        <nav className="admin-sidebar__nav">
+          {navItems.map(item=>(
+            <button key={item.id} className={`admin-nav-item${activeSection===item.id?' active':''}`} onClick={()=>setActiveSection(item.id)}>
+              <span className="nav-icon">{item.icon}</span>
+              <span>{item.label}</span>
+              {item.badge ? <span className="admin-nav-badge">{item.badge}</span> : null}
+            </button>
+          ))}
+        </nav>
+        <div className="admin-sidebar__footer">
+          <button className="btn btn--outline btn--sm w-full" onClick={onClose}>← Back to Site</button>
+        </div>
+      </aside>
+
+      <main className="admin-main">
+        <header className="admin-topbar">
+          <div>
+            <p className="eyebrow" style={{marginBottom:'0.2rem'}}>JVG Recruitment Solutions</p>
+            <h1 className="admin-topbar__title">
+              {activeSection==='dashboard' && 'Dashboard'}
+              {activeSection==='jobs'      && 'Job Listings'}
+              {activeSection==='enquiries' && 'Enquiries'}
+            </h1>
+          </div>
+          <div className="admin-topbar__actions">
+            <button className="btn-theme" onClick={toggleTheme} title="Toggle theme">{theme==='dark'?'☀️':'🌙'}</button>
+            {activeSection==='jobs' && (
+              <button className="btn btn--primary btn--sm" onClick={()=>{setShowJobForm(!showJobForm);setEditingJob(null);setJobForm(emptyJob);}}>
+                {showJobForm?'✕ Cancel':'+ Post New Job'}
+              </button>
+            )}
+            {activeSection==='enquiries' && unread > 0 && (
+              <button className="btn btn--ghost btn--sm" onClick={markAllRead}>✓ Mark All Read</button>
+            )}
+          </div>
+        </header>
+
+        <div className="admin-content">
+
+          {/* ── DASHBOARD ── */}
+          {activeSection==='dashboard' && (
+            <>
+              <div className="admin-stats-row">
+                {statCards.map((s,i) => (
+                  <AdminStatCard key={i} icon={s.icon} label={s.label} value={s.value} colour={s.colour} delay={i*0.1}/>
+                ))}
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1.5rem'}}>
+                <div className="admin-panel-card">
+                  <div className="admin-panel-card__header">
+                    <span className="admin-panel-card__title">Recent Enquiries</span>
+                    <button className="btn btn--ghost btn--sm" onClick={()=>setActiveSection('enquiries')}>View All</button>
+                  </div>
+                  {enquiries.length===0?(
+                    <div className="empty-state" style={{padding:'2rem'}}><div className="empty-state__icon">📭</div><p style={{fontFamily:'var(--font-body)',fontSize:'0.85rem',color:'var(--text-muted)'}}>No enquiries yet. They'll appear here when the contact form is submitted.</p></div>
+                  ):(
+                    <table className="admin-table"><thead><tr><th>Name</th><th>Type</th><th>Company / Role</th><th>Status</th></tr></thead>
+                      <tbody>{enquiries.slice(0,6).map(e=>(
+                        <tr key={e.id} style={{cursor:'pointer'}} onClick={()=>{setViewEnquiry(e);if(!e.read)markRead(e.id);}}>
+                          <td style={{fontWeight:e.read?400:700}}>{e.name}</td>
+                          <td><span className={`badge badge--${e.type==='employer'?'employer':'candidate'}`}>{e.type}</span></td>
+                          <td style={{fontSize:'0.8rem',color:'var(--text-muted)'}}>{e.company||e.position||'—'}</td>
+                          <td><span className={`badge ${e.read?'badge--read':'badge--new'}`}>{e.read?'Read':'New'}</span></td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  )}
+                </div>
+                <div className="admin-panel-card">
+                  <div className="admin-panel-card__header">
+                    <span className="admin-panel-card__title">Active Job Listings</span>
+                    <button className="btn btn--ghost btn--sm" onClick={()=>setActiveSection('jobs')}>Manage</button>
+                  </div>
+                  <table className="admin-table"><thead><tr><th>Title</th><th>Location</th><th>Type</th></tr></thead>
+                    <tbody>{allJobs.slice(0,6).map(j=><tr key={j.id}><td style={{fontWeight:600,fontSize:'0.82rem'}}>{getJobIcon(j.industry)} {j.title}</td><td style={{fontSize:'0.82rem'}}>{j.location}</td><td><span className="badge badge--active" style={{fontSize:'0.65rem'}}>{j.type}</span></td></tr>)}</tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ── JOBS ── */}
+          {activeSection==='jobs' && (
+            <>
+              {showJobForm && (
+                <div className="job-form-panel">
+                  <p className="job-form-panel__title">{editingJob?'✏️ Edit Job Listing':'➕ Post New Job Listing'}</p>
+                  <div className="form-row" style={{marginBottom:'1rem'}}>
+                    <div className="form-group" style={{marginBottom:0}}><label className="form-label">Job Title *</label><input className="form-input" placeholder="e.g. Head of Marketing" value={jobForm.title} onChange={e=>setJobForm(p=>({...p,title:e.target.value}))}/></div>
+                    <div className="form-group" style={{marginBottom:0}}><label className="form-label">Location *</label><input className="form-input" placeholder="Lagos" value={jobForm.location} onChange={e=>setJobForm(p=>({...p,location:e.target.value}))}/></div>
+                  </div>
+                  <div className="form-row" style={{marginBottom:'1rem'}}>
+                    <div className="form-group" style={{marginBottom:0}}><label className="form-label">Employment Type</label><select className="form-select" value={jobForm.type} onChange={e=>setJobForm(p=>({...p,type:e.target.value}))}><option>Permanent</option><option>Contract</option><option>Temporary</option><option>Part-time</option></select></div>
+                    <div className="form-group" style={{marginBottom:0}}><label className="form-label">Industry</label><input className="form-input" placeholder="Finance, Hospitality, HR…" value={jobForm.industry} onChange={e=>setJobForm(p=>({...p,industry:e.target.value}))}/></div>
+                  </div>
+                  {/* Salary field with permanent ₦ prefix */}
+                  <div className="form-group" style={{marginBottom:'1rem'}}>
+                    <label className="form-label">Salary Range</label>
+                    <div className="salary-input-wrap">
+                      <span className="salary-input-prefix">₦</span>
+                      <input
+                        className="form-input salary-input-field"
+                        placeholder="e.g. 10M – 15M / year"
+                        value={jobForm.salaryAmount}
+                        onChange={e=>setJobForm(p=>({...p,salaryAmount:e.target.value}))}
+                      />
+                    </div>
+                    <p style={{fontFamily:'var(--font-body)',fontSize:'0.72rem',color:'var(--text-muted)',marginTop:'0.35rem'}}>Enter the amount only — the ₦ symbol is added automatically.</p>
+                  </div>
+                  <div className="form-group" style={{marginBottom:'1rem'}}><label className="form-label">Short Excerpt (shown on card) *</label><textarea className="form-textarea" style={{minHeight:'70px'}} placeholder="1-2 sentence summary shown on the job listing card…" value={jobForm.excerpt} onChange={e=>setJobForm(p=>({...p,excerpt:e.target.value}))}/></div>
+                  <div className="form-group">
+                    <label className="form-label">Full Job Description — HTML supported</label>
+                    <p style={{fontFamily:'var(--font-body)',fontSize:'0.75rem',color:'var(--text-muted)',marginBottom:'0.5rem'}}>You can use: &lt;h4&gt; for headings, &lt;ul&gt;&lt;li&gt; for bullet lists, &lt;p&gt; for paragraphs</p>
+                    <textarea className="form-textarea" style={{minHeight:'160px',fontFamily:'monospace',fontSize:'0.82rem'}} placeholder={`<h4>About the Role</h4>\n<p>Description here...</p>`} value={jobForm.description} onChange={e=>setJobForm(p=>({...p,description:e.target.value}))}/>
+                  </div>
+                  <div style={{display:'flex',gap:'0.75rem',marginTop:'0.5rem'}}>
+                    <button className="btn btn--primary btn--sm" onClick={saveJob}>{editingJob?'💾 Save Changes':'🚀 Publish Job'}</button>
+                    <button className="btn btn--outline btn--sm" onClick={()=>{setShowJobForm(false);setEditingJob(null);setJobForm(emptyJob);}}>Cancel</button>
+                  </div>
+                </div>
+              )}
+              <div className="admin-panel-card">
+                <div className="admin-panel-card__header">
+                  <span className="admin-panel-card__title">All Job Listings</span>
+                  <div style={{display:'flex',gap:'0.75rem',alignItems:'center'}}>
+                    <input className="form-input" placeholder="Search jobs…" value={jobSearch} onChange={e=>setJobSearch(e.target.value)} style={{width:'200px',padding:'0.5rem 0.75rem',fontSize:'0.82rem'}}/>
+                    <span className="admin-panel-card__meta">{filteredAdminJobs.length} of {allJobs.length}</span>
+                  </div>
+                </div>
+                {filteredAdminJobs.length===0?(
+                  <div className="empty-state"><div className="empty-state__icon">💼</div><h3 className="empty-state__title">No jobs found</h3></div>
+                ):(
+                  <div style={{overflowX:'auto'}}>
+                    <table className="admin-table">
+                      <thead><tr><th>Title</th><th>Location</th><th>Industry</th><th>Salary</th><th>Type</th><th>Source</th><th>Actions</th></tr></thead>
+                      <tbody>{filteredAdminJobs.map(j=>{
+                        const isCustom = customJobs.some(c=>c.id===j.id);
+                        return (
+                          <tr key={j.id}>
+                            <td style={{fontWeight:600}}>{getJobIcon(j.industry)} {j.title}</td>
+                            <td>📍 {j.location}</td>
+                            <td>{j.industry}</td>
+                            <td style={{fontSize:'0.8rem',color:'var(--text-muted)'}}>{j.salary||'—'}</td>
+                            <td><span className="badge badge--active">{j.type}</span></td>
+                            <td><span className={`badge ${isCustom?'badge--employer':'badge--read'}`}>{isCustom?'Custom':'Sample'}</span></td>
+                            <td><div className="td-actions">
+                              <button className="btn btn--ghost btn--icon" title="Edit" onClick={()=>editJob(j)} style={{opacity:isCustom?1:0.4,cursor:isCustom?'pointer':'not-allowed'}}>✏️</button>
+                              <button className="btn btn--ghost btn--icon" title="Duplicate" onClick={()=>duplicateJob(j)}>📋</button>
+                              {isCustom&&<button className="btn btn--danger btn--icon" title="Delete" onClick={()=>deleteJob(j.id)}>🗑️</button>}
+                            </div></td>
+                          </tr>
+                        );
+                      })}</tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* ── ENQUIRIES ── */}
+          {activeSection==='enquiries' && (
+            <div className="admin-panel-card">
+              <div className="admin-panel-card__header">
+                <span className="admin-panel-card__title">All Enquiries</span>
+                <span className="admin-panel-card__meta">{enquiries.length} total · {unread} unread</span>
+              </div>
+              <div className="admin-tab-strip">
+                {[{id:'all',label:`All (${enquiries.length})`},{id:'employer',label:`Employers (${empEnquiries.length})`},{id:'candidate',label:`Candidates (${candEnquiries.length})`}].map(t=>(
+                  <button key={t.id} className={`admin-tab-strip-btn${enquiryTab===t.id?' active':''}`} onClick={()=>setEnquiryTab(t.id)}>{t.label}</button>
+                ))}
+              </div>
+              <div className="admin-tab-content">
+                {filteredEnquiries.length===0?(
+                  <div className="empty-state"><div className="empty-state__icon">📭</div><h3 className="empty-state__title">No enquiries found</h3><p className="empty-state__text">Enquiries submitted through the contact form will appear here.</p></div>
+                ):(
+                  <div style={{overflowX:'auto'}}>
+                    <table className="admin-table">
+                      <thead><tr><th>Name</th><th>Type</th><th>Email</th><th>Company / Role</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+                      <tbody>{filteredEnquiries.map(e=>(
+                        <tr key={e.id} style={{fontWeight:e.read?400:600,cursor:'pointer'}} onClick={()=>{setViewEnquiry(e);if(!e.read)markRead(e.id);}}>
+                          <td style={{fontWeight:e.read?500:700}}>{e.name}</td>
+                          <td><span className={`badge badge--${e.type==='employer'?'employer':'candidate'}`}>{e.type==='employer'?'Employer':'Candidate'}</span></td>
+                          <td style={{fontSize:'0.82rem'}}>{e.email}</td>
+                          <td style={{fontSize:'0.82rem',color:'var(--text-muted)'}}>{e.company||e.position||'—'}</td>
+                          <td style={{fontSize:'0.8rem',color:'var(--text-muted)'}}>{new Date(e.date).toLocaleDateString('en-GB')}</td>
+                          <td><span className={`badge ${e.read?'badge--read':'badge--new'}`}>{e.read?'Read':'New'}</span></td>
+                          <td onClick={ev=>ev.stopPropagation()}><div className="td-actions">
+                            <button className="btn btn--ghost btn--sm" onClick={()=>{setViewEnquiry(e);}}>View</button>
+                            <a href={`mailto:${e.email}?subject=Re: Your enquiry — JVG Recruitment`} className="btn btn--ghost btn--icon" title="Reply">✉️</a>
+                            <button className="btn btn--danger btn--icon" title="Delete" onClick={()=>deleteEnquiry(e.id)}>🗑️</button>
+                          </div></td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+        </div>
+      </main>
+
+      {viewEnquiry && (
+        <EnquiryDetailModal
+          enquiry={viewEnquiry}
+          onClose={()=>setViewEnquiry(null)}
+          onMarkRead={markRead}
+          onDelete={deleteEnquiry}
+        />
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// FOOTER
+// ============================================================
+function Footer({ setPage }) {
+  return (
+    <footer className="footer">
+      <div className="container">
+        <div className="footer__grid">
+          <div>
+            <div className="footer__brand-logo"><div className="navbar__logo-mark">JVG</div>JVG Recruitment</div>
+            <p className="footer__tagline">Connecting employers with performance-ready talent across Nigeria.
+              Specialists in hotel staffing, corporate recruitment,
+              and HR outsourcing for businesses that can't afford hiring mistakes.</p>
+          </div>
+          <div>
+            <p className="footer__col-title">Company</p>
+            <div className="footer__links">
+              <a href="#" onClick={e=>{e.preventDefault();setPage('about');}}>About Us</a>
+              <a href="#" onClick={e=>{e.preventDefault();setPage('services');}}>Our Services</a>
+              <a href="#" onClick={e=>{e.preventDefault();setPage('jobs');}}>Job Listings</a>
+              <a href="#" onClick={e=>{e.preventDefault();setPage('contact');}}>Contact</a>
+            </div>
+          </div>
+          <div>
+            <p className="footer__col-title">Services</p>
+            <div className="footer__links">
+              <a href="#">Permanent Recruitment</a><a href="#">Contract Staffing</a>
+              <a href="#">HR Outsourcing</a><a href="#">Executive Search</a><a href="#">Hospitality Staffing</a>
+            </div>
+          </div>
+          <div>
+            <p className="footer__col-title">Contact</p>
+            <div className="footer__links">
+              <a href="mailto:info@jvgrecruitmentsolutions.com">info@jvgrecruitmentsolutions.com</a>
+              <a href="tel:+234 704 745 3599">+234 704 745 3599</a>
+              <a href="#">11, Aliyu Mohammed Road TAK Continental Estate Life Camp FCT Abuja</a>
+              <a href="#">Mon–Sat 8am–6pm WAT</a>
+            </div>
+          </div>
+        </div>
+        <div className="footer__bottom">
+          <p className="footer__copy">© {new Date().getFullYear()} JVG Recruitment Solutions Ltd. All rights reserved.</p>
+          <div className="footer__legal"><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Cookie Policy</a></div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// ============================================================
+// APP ROOT
+// ============================================================
+function App() {
+  const [page, setPage] = useState('home');
+  const [theme, setTheme] = useState(()=>localStorage.getItem('jvg_theme')||'light');
+  const [adminMode, setAdminMode] = useState(false);
+  const [adminAuthenticated, setAdminAuthenticated] = useState(false);
+  const [keySeq, setKeySeq] = useState('');
+
+  useEffect(()=>{ document.documentElement.setAttribute('data-theme',theme); localStorage.setItem('jvg_theme',theme); },[theme]);
+
+  useEffect(()=>{
+    const handler = e => {
+      const seq = (keySeq+e.key).slice(-8);
+      setKeySeq(seq);
+      if (seq === 'jvgadmin') setAdminMode(true);
+    };
+    window.addEventListener('keypress', handler);
+    return () => window.removeEventListener('keypress', handler);
+  },[keySeq]);
+
+  useEffect(()=>{ if(!adminMode) window.scrollTo({top:0,behavior:'smooth'}); },[page]);
+
+  const toggleTheme = () => setTheme(t=>t==='light'?'dark':'light');
+  const handleExitAdmin = () => { setAdminMode(false); setAdminAuthenticated(false); };
+
+  if (adminMode) {
+    if (!adminAuthenticated) return <AdminLogin onLogin={()=>setAdminAuthenticated(true)}/>;
+    return <AdminPanel onClose={handleExitAdmin} toggleTheme={toggleTheme} theme={theme}/>;
+  }
+
+  const renderPage = () => {
+    switch(page) {
+      case 'home':     return <HomePage setPage={setPage}/>;
+      case 'about':    return <AboutPage setPage={setPage}/>;
+      case 'services': return <><PageHero eyebrow="What We Offer" title="Our Recruitment Services" subtitle="Tailored talent solutions for every hiring need."/><ServicesSection setPage={setPage}/><HowItWorksSection/><TestimonialsSection/></>;
+      case 'jobs':     return <JobsPage setPage={setPage}/>;
+      case 'contact':  return <ContactPage/>;
+      default:         return <HomePage setPage={setPage}/>;
+    }
+  };
+
+  return (
+    <>
+      <Navbar page={page} setPage={setPage} theme={theme} toggleTheme={toggleTheme}/>
+      <main>{renderPage()}</main>
+      <Footer setPage={setPage}/>
+    </>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(App));
