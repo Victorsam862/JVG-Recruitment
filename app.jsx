@@ -83,7 +83,7 @@ const ABOUT_PAGE_STATS = [
   { value:'80+', label:'Corporate Clients' }, { value:'15+', label:'Industries Covered' }, { value:'96%', label:'Client Satisfaction' },
 ];
 const JOBS_PAGE_STATS = [
-  { value:'120+', label:'Active Openings' }, { value:'500+', label:'Candidates Placed' },
+  { value:'500+', label:'Candidates Placed' },
   { value:'80+', label:'Hiring Partners' }, { value:'15+', label:'Sectors' }, { value:'48', label:'Hrs Avg Placement' },
 ];
 const CONTACT_PAGE_STATS = [
@@ -146,15 +146,6 @@ const INDUSTRY_ICONS = {
   'Logistics':'🚚','Real Estate':'🏠','Consulting':'📊','Default':'💼',
 };
 function getJobIcon(industry) { return INDUSTRY_ICONS[industry] || INDUSTRY_ICONS['Default']; }
-
-const SAMPLE_JOBS = [
-  { id:1, title:'General Manager — Hospitality', type:'Permanent', location:'Lagos', industry:'Hospitality', salary:'₦1.5M – ₦2M / month', excerpt:'A leading 5-star hotel group seeks an experienced GM to oversee operations across two Lagos properties.', description:'<h4>About the Role</h4><p>We are recruiting on behalf of a leading 5-star hotel group operating two premium properties in Lagos. The General Manager will have full P&L responsibility and lead a team of over 200 hospitality professionals.</p><h4>Key Responsibilities</h4><ul><li>Oversee all hotel operations including front office, F&B, housekeeping, and events</li><li>Drive revenue growth and maintain exceptional guest satisfaction scores</li><li>Lead, mentor and develop department heads and senior managers</li><li>Manage budgets, forecasting and financial reporting to the Group Board</li><li>Ensure full compliance with brand standards and health & safety regulations</li></ul><h4>Requirements</h4><ul><li>Minimum 10 years in hospitality management, at least 5 at GM level</li><li>Degree in Hospitality Management or related field</li><li>Proven track record with a recognised international hotel brand</li><li>Excellent leadership, financial acumen and guest relations skills</li></ul>' },
-  { id:2, title:'Head of Finance', type:'Permanent', location:'Abuja', industry:'Finance', salary:'₦1.8M – ₦2.5M / month', excerpt:'Fast-growing fintech seeks a strategic CFO-level finance head. ICAN/ACCA qualified, 8+ years post-qualification experience.', description:'<h4>About the Role</h4><p>Our client is a fast-scaling Nigerian fintech disrupting the payments and lending space. They seek a commercially astute Head of Finance to partner with the CEO and shape the financial future of the business.</p><h4>Key Responsibilities</h4><ul><li>Lead all financial planning, analysis, budgeting, and treasury functions</li><li>Prepare board-level financial reports and investor presentations</li><li>Drive cost optimisation and profitability improvement initiatives</li><li>Manage external auditors, regulators and banking relationships</li><li>Build and develop a high-performing finance team</li></ul><h4>Requirements</h4><ul><li>ICAN or ACCA qualified with 8+ years post-qualification experience</li><li>Prior experience in fintech, banking or financial services preferred</li><li>Deep expertise in financial modelling and fundraising processes</li><li>Strong leadership presence and ability to influence at C-suite level</li></ul>' },
-  { id:3, title:'HR Business Partner', type:'Permanent', location:'Lagos', industry:'HR', salary:'₦833K – ₦1.25M / month', excerpt:'Partner with senior leadership to drive talent strategy across a 300-person organisation. CIPM membership essential.', description:'<h4>About the Role</h4><p>A leading professional services firm seeks an experienced HR Business Partner to serve as a strategic advisor to senior leaders across a 300-person organisation in Lagos.</p><h4>Key Responsibilities</h4><ul><li>Act as a trusted advisor to business unit leaders on all people-related matters</li><li>Lead talent acquisition, performance management and succession planning</li><li>Drive employee engagement, culture and organisational development initiatives</li><li>Manage employee relations cases and ensure HR compliance</li><li>Partner with L&D to identify and close capability gaps</li></ul><h4>Requirements</h4><ul><li>CIPM membership essential; SHRM or CIPD certification an advantage</li><li>Minimum 6 years progressive HR experience, ideally in professional services</li><li>Strong business acumen and ability to translate HR strategy into outcomes</li><li>Excellent interpersonal and stakeholder management skills</li></ul>' },
-  { id:4, title:'Front Office Supervisor', type:'Contract', location:'Abuja', industry:'Hospitality', salary:'₦292K – ₦417K / month', excerpt:'Supervise front desk operations for a boutique hotel in Abuja. Guest experience excellence and team leadership skills essential.', description:'<h4>About the Role</h4><p>A well-regarded boutique hotel in the heart of Abuja is seeking a polished Front Office Supervisor to lead its front desk team and ensure exceptional arrival and departure experiences.</p><h4>Key Responsibilities</h4><ul><li>Supervise daily front office operations including check-in, check-out and reservations</li><li>Train, coach and motivate a team of 6 front desk agents</li><li>Handle guest complaints swiftly and professionally to ensure satisfaction</li><li>Monitor room inventory and coordinate closely with housekeeping</li><li>Prepare daily operational reports for the Rooms Division Manager</li></ul><h4>Requirements</h4><ul><li>HND or BSc in Hospitality Management or related field</li><li>Minimum 3 years front office experience in a hotel environment</li><li>Proficiency in hotel PMS software (Opera or similar)</li><li>Outstanding communication, problem-solving and leadership skills</li></ul>' },
-  { id:5, title:'Operations Manager', type:'Permanent', location:'Port Harcourt', industry:'Oil & Gas', salary:'₦1.67M – ₦2.33M / month', excerpt:'Oversee day-to-day operations for an integrated energy services company in the Niger Delta region.', description:'<h4>About the Role</h4><p>Our client is an established integrated energy services company with operations across the Niger Delta. They require a seasoned Operations Manager to oversee field operations, logistics and contractor management.</p><h4>Key Responsibilities</h4><ul><li>Manage end-to-end field operations including logistics, maintenance and HSE compliance</li><li>Coordinate with client companies, subcontractors and government agencies</li><li>Develop and manage operational budgets and KPIs</li><li>Lead a multi-disciplinary team of engineers, supervisors and support staff</li><li>Implement continuous improvement initiatives to drive efficiency and safety</li></ul><h4>Requirements</h4><ul><li>BSc/BEng in Engineering, Operations Management or related field</li><li>Minimum 8 years operations experience in the oil and gas sector</li><li>Strong knowledge of HSE regulations and Nigerian oil industry standards</li><li>Demonstrated ability to manage complex, multi-stakeholder projects</li></ul>' },
-  { id:6, title:'Marketing Manager', type:'Permanent', location:'Lagos', industry:'FMCG', salary:'₦750K – ₦1.08M / month', excerpt:'Lead brand and digital marketing strategy for an established FMCG brand. Agency background preferred.', description:'<h4>About the Role</h4><p>A well-established FMCG brand with a strong Nigerian market presence is looking for a creative and data-driven Marketing Manager to lead integrated marketing campaigns and grow brand equity.</p><h4>Key Responsibilities</h4><ul><li>Develop and execute the annual marketing plan and brand calendar</li><li>Lead digital marketing including social media, SEO, email and paid media</li><li>Manage advertising agency relationships and campaign production</li><li>Analyse market trends, consumer insights and campaign performance data</li><li>Collaborate with the sales team to develop trade marketing activations</li></ul><h4>Requirements</h4><ul><li>BSc in Marketing, Business Administration or related field</li><li>5+ years brand or marketing management experience, ideally in FMCG</li><li>Agency background and ATL/BTL campaign management experience preferred</li><li>Proficiency in digital analytics tools (Google Analytics, Meta Ads Manager)</li></ul>' },
-];
 
 // ============================================================
 // NAVBAR
@@ -657,23 +648,17 @@ function ContactForm({ jobTitle }) {
 }
 
 // ============================================================
-// JOB CARD — Refined luxury design
+// JOB CARD
 // ============================================================
 function JobCard({ job, onApply, onLearnMore, delay }) {
   const [ref, vis] = useReveal();
-  const [hovered, setHovered] = useState(false);
   return (
     <div
       ref={ref}
       className={`job-card reveal${vis?' visible':''}`}
       style={{transitionDelay:`${delay}s`}}
-      onMouseEnter={()=>setHovered(true)}
-      onMouseLeave={()=>setHovered(false)}
     >
-      {/* Top accent line */}
       <div className="job-card__accent-line"/>
-
-      {/* Header band */}
       <div className="job-card__header">
         <div className="job-card__industry-row">
           <div className="job-card__icon-wrap">{getJobIcon(job.industry)}</div>
@@ -681,8 +666,6 @@ function JobCard({ job, onApply, onLearnMore, delay }) {
         </div>
         <div className="job-card__type-pill">{job.type}</div>
       </div>
-
-      {/* Body */}
       <div className="job-card__body">
         <h3 className="job-card__title">{job.title}</h3>
         <div className="job-card__meta">
@@ -693,8 +676,6 @@ function JobCard({ job, onApply, onLearnMore, delay }) {
         </div>
         <p className="job-card__excerpt">{job.excerpt}</p>
       </div>
-
-      {/* Salary + CTA footer */}
       <div className="job-card__footer">
         {job.salary && (
           <div className="job-card__salary-block">
@@ -758,20 +739,25 @@ function AboutPage({ setPage }) {
 }
 
 function JobsPage({ setPage }) {
-  const [jobs, setJobs] = useState(()=>{ const stored=JSON.parse(localStorage.getItem('jvg_jobs')||'[]'); const ids=new Set(stored.map(j=>j.id)); return [...stored,...SAMPLE_JOBS.filter(j=>!ids.has(j.id))]; });
+  // Jobs come ONLY from localStorage — no hardcoded sample data
+  const [jobs, setJobs] = useState(() => JSON.parse(localStorage.getItem('jvg_jobs') || '[]'));
   const [filter, setFilter] = useState('All');
   const [modalJob, setModalJob] = useState(null);
   const [applyJob, setApplyJob] = useState(null);
   const [search, setSearch] = useState('');
 
-  useEffect(()=>{
-    const sync = () => { const stored=JSON.parse(localStorage.getItem('jvg_jobs')||'[]'); const ids=new Set(stored.map(j=>j.id)); setJobs([...stored,...SAMPLE_JOBS.filter(j=>!ids.has(j.id))]); };
+  useEffect(() => {
+    const sync = () => setJobs(JSON.parse(localStorage.getItem('jvg_jobs') || '[]'));
     window.addEventListener('jvg_jobs_updated', sync);
     return () => window.removeEventListener('jvg_jobs_updated', sync);
-  },[]);
+  }, []);
 
-  const industries = ['All',...Array.from(new Set(jobs.map(j=>j.industry)))];
-  const filtered = jobs.filter(job=>{ const t=search.trim().toLowerCase(); const ms=!t||(job.title.toLowerCase().includes(t)||job.location.toLowerCase().includes(t)||job.industry.toLowerCase().includes(t)); return ms&&(filter==='All'||job.industry===filter); });
+  const industries = ['All', ...Array.from(new Set(jobs.map(j => j.industry)))];
+  const filtered = jobs.filter(job => {
+    const t = search.trim().toLowerCase();
+    const ms = !t || (job.title.toLowerCase().includes(t) || job.location.toLowerCase().includes(t) || job.industry.toLowerCase().includes(t));
+    return ms && (filter === 'All' || job.industry === filter);
+  });
 
   return (
     <>
@@ -783,12 +769,27 @@ function JobsPage({ setPage }) {
           {search&&<span style={{fontFamily:'var(--font-body)',fontSize:'0.82rem',color:'var(--text-muted)',alignSelf:'center'}}>{filtered.length} result{filtered.length!==1?'s':''} found</span>}
         </div>
         <div className="jobs__filters">{industries.map(ind=><button key={ind} className={`filter-btn${filter===ind?' active':''}`} onClick={()=>setFilter(ind)}>{ind}</button>)}</div>
-        {filtered.length===0?(
-          <div className="empty-state"><div className="empty-state__icon">🔍</div><h3 className="empty-state__title">No roles found</h3><p className="empty-state__text">{search?`No jobs match "${search}" — try a different keyword`:'Try adjusting your filter'}</p></div>
-        ):(
+
+        {jobs.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state__icon">💼</div>
+            <h3 className="empty-state__title">No job listings yet</h3>
+            <p className="empty-state__text">Check back soon — new opportunities are posted regularly.</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state__icon">🔍</div>
+            <h3 className="empty-state__title">No roles found</h3>
+            <p className="empty-state__text">{search ? `No jobs match "${search}" — try a different keyword` : 'Try adjusting your filter'}</p>
+          </div>
+        ) : (
           <div className="jobs__grid">{filtered.map((job,i)=><JobCard key={job.id} job={job} delay={(i%3)*0.1} onApply={setApplyJob} onLearnMore={setModalJob}/>)}</div>
         )}
-        <div style={{textAlign:'center',marginTop:'3rem'}}><p style={{fontFamily:'var(--font-body)',color:'var(--text-muted)',marginBottom:'1rem',fontSize:'0.88rem',fontWeight:300}}>Don't see what you're looking for? Send us a speculative application.</p><button className="btn btn--outline" onClick={()=>setPage('contact')}>Register Your Interest →</button></div>
+
+        <div style={{textAlign:'center',marginTop:'3rem'}}>
+          <p style={{fontFamily:'var(--font-body)',color:'var(--text-muted)',marginBottom:'1rem',fontSize:'0.88rem',fontWeight:300}}>Don't see what you're looking for? Send us a speculative application.</p>
+          <button className="btn btn--outline" onClick={()=>setPage('contact')}>Register Your Interest →</button>
+        </div>
       </div></section>
 
       {modalJob&&(
@@ -798,7 +799,7 @@ function JobsPage({ setPage }) {
               <div><span className="job-card__type-pill" style={{marginBottom:'0.75rem',display:'inline-flex'}}>{modalJob.type}</span><h2 className="modal__title" style={{marginTop:'0.75rem'}}>{modalJob.title}</h2></div>
               <button className="modal__close" onClick={()=>setModalJob(null)}>✕</button>
             </div>
-            <div className="job-card__meta" style={{marginBottom:'0.75rem'}}><span>📍 {modalJob.location}</span><span>🏢 {modalJob.industry}</span></div>
+            <div className="job-card__meta" style={{marginBottom:'0.75rem'}}><span>📍 {modalJob.location}</span><span style={{marginLeft:'1rem'}}>🏢 {modalJob.industry}</span></div>
             {modalJob.salary&&<div style={{marginBottom:'1.5rem'}}><span className="job-card__salary-value" style={{fontSize:'1rem'}}>💰 {modalJob.salary}</span></div>}
             {modalJob.description?<div className="job-description" dangerouslySetInnerHTML={{__html:modalJob.description}}/>:<p style={{fontFamily:'var(--font-body)',fontSize:'0.92rem',fontWeight:300,color:'var(--text-secondary)',lineHeight:1.75,marginBottom:'2rem'}}>{modalJob.excerpt}</p>}
             <div style={{display:'flex',gap:'0.75rem',marginTop:'2rem',flexWrap:'wrap'}}><button className="btn btn--primary" style={{flex:1}} onClick={()=>{setModalJob(null);setApplyJob(modalJob);}}>Apply for This Role →</button></div>
@@ -934,92 +935,98 @@ function AdminStatCard({ icon, label, value, colour, delay }) {
 }
 
 // ============================================================
-// ADMIN PANEL — Subscribers section REMOVED
+// ADMIN PANEL
 // ============================================================
 function AdminPanel({ onClose, toggleTheme, theme }) {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [enquiries, setEnquiries] = useState(()=>JSON.parse(localStorage.getItem('jvg_enquiries')||'[]'));
-  const [customJobs, setCustomJobs] = useState(()=>JSON.parse(localStorage.getItem('jvg_jobs')||'[]'));
+  const [jobs, setJobs] = useState(()=>JSON.parse(localStorage.getItem('jvg_jobs')||'[]'));
   const [showJobForm, setShowJobForm] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
   const [enquiryTab, setEnquiryTab] = useState('all');
   const [viewEnquiry, setViewEnquiry] = useState(null);
   const [jobSearch, setJobSearch] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const emptyJob = { title:'', type:'Permanent', location:'', industry:'', salaryAmount:'', excerpt:'', description:'' };
   const [jobForm, setJobForm] = useState(emptyJob);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const allJobs = [...customJobs, ...SAMPLE_JOBS.filter(j=>!new Set(customJobs.map(c=>c.id)).has(j.id))];
-  const filteredAdminJobs = jobSearch.trim() ? allJobs.filter(j=>j.title.toLowerCase().includes(jobSearch.toLowerCase())||j.location.toLowerCase().includes(jobSearch.toLowerCase())||j.industry.toLowerCase().includes(jobSearch.toLowerCase())) : allJobs;
+  const filteredAdminJobs = jobSearch.trim()
+    ? jobs.filter(j =>
+        j.title.toLowerCase().includes(jobSearch.toLowerCase()) ||
+        j.location.toLowerCase().includes(jobSearch.toLowerCase()) ||
+        j.industry.toLowerCase().includes(jobSearch.toLowerCase())
+      )
+    : jobs;
 
   const unread = enquiries.filter(e=>!e.read).length;
   const empEnquiries = enquiries.filter(e=>e.type==='employer');
   const candEnquiries = enquiries.filter(e=>e.type==='candidate');
 
-  // No subscribers nav item
   const navItems = [
     { id:'dashboard', icon:'📊', label:'Dashboard' },
-    { id:'jobs', icon:'💼', label:'Job Listings', badge: allJobs.length },
-    { id:'enquiries', icon:'📋', label:'Enquiries', badge: unread||null },
+    { id:'jobs',      icon:'💼', label:'Job Listings', badge: jobs.length || null },
+    { id:'enquiries', icon:'📋', label:'Enquiries',    badge: unread || null },
   ];
 
   const persistEnquiries = (updated) => { setEnquiries(updated); localStorage.setItem('jvg_enquiries',JSON.stringify(updated)); };
-  const markRead = id => persistEnquiries(enquiries.map(e=>e.id===id?{...e,read:true}:e));
+  const markRead      = id => persistEnquiries(enquiries.map(e=>e.id===id?{...e,read:true}:e));
   const deleteEnquiry = id => persistEnquiries(enquiries.filter(e=>e.id!==id));
-  const markAllRead = () => persistEnquiries(enquiries.map(e=>({...e,read:true})));
+  const markAllRead   = () => persistEnquiries(enquiries.map(e=>({...e,read:true})));
 
   const persistJobs = (updated) => {
-    setCustomJobs(updated);
-    localStorage.setItem('jvg_jobs',JSON.stringify(updated));
+    setJobs(updated);
+    localStorage.setItem('jvg_jobs', JSON.stringify(updated));
     window.dispatchEvent(new Event('jvg_jobs_updated'));
   };
 
-  // Build the salary string with the ₦ prefix and / month suffix baked in
   const buildSalary = (form) => {
     if (!form.salaryAmount || !form.salaryAmount.trim()) return '';
     let amt = form.salaryAmount.trim();
-    // Strip any leading ₦ the user may have typed (we add it ourselves)
     if (amt.startsWith('₦')) amt = amt.slice(1).trim();
-    // Append / month if the user hasn't already typed a period qualifier
     const hasQualifier = /\/(month|year|mo|yr|week)/i.test(amt);
     return `₦${amt}${hasQualifier ? '' : ' / month'}`;
   };
 
   const saveJob = () => {
-    if (!jobForm.title||!jobForm.location) { alert('Job title and location are required.'); return; }
+    if (!jobForm.title || !jobForm.location) { alert('Job title and location are required.'); return; }
     const salary = buildSalary(jobForm);
     const jobData = { title:jobForm.title, type:jobForm.type, location:jobForm.location, industry:jobForm.industry, salary, excerpt:jobForm.excerpt, description:jobForm.description };
     const updated = editingJob
-      ? customJobs.map(j=>j.id===editingJob.id?{...jobData,id:j.id}:j)
-      : [{...jobData,id:Date.now()},...customJobs];
+      ? jobs.map(j => j.id === editingJob.id ? { ...jobData, id:j.id } : j)
+      : [{ ...jobData, id:Date.now() }, ...jobs];
     persistJobs(updated);
     setJobForm(emptyJob); setShowJobForm(false); setEditingJob(null);
   };
 
   const editJob = job => {
-    // Strip the ₦ prefix when loading into the salaryAmount field for editing
     const raw = job.salary ? job.salary.replace(/^₦/,'') : '';
-    setJobForm({...job, salaryAmount: raw});
+    setJobForm({ ...job, salaryAmount: raw });
     setEditingJob(job);
     setShowJobForm(true);
     setActiveSection('jobs');
   };
-  const deleteJob = id => { if (!confirm('Delete this job listing?')) return; persistJobs(customJobs.filter(j=>j.id!==id)); };
-  const duplicateJob = job => { persistJobs([{...job,id:Date.now(),title:job.title+' (Copy)'},...customJobs]); };
 
-  const filteredEnquiries = enquiryTab==='all'?enquiries:enquiryTab==='employer'?empEnquiries:candEnquiries;
+  const deleteJob = id => {
+    if (!window.confirm('Delete this job listing?')) return;
+    persistJobs(jobs.filter(j => j.id !== id));
+  };
+
+  const duplicateJob = job => {
+    persistJobs([{ ...job, id:Date.now(), title:job.title+' (Copy)' }, ...jobs]);
+  };
+
+  const filteredEnquiries = enquiryTab==='all' ? enquiries : enquiryTab==='employer' ? empEnquiries : candEnquiries;
 
   const statCards = [
     { icon:'🏢', label:'Employer Enquiries',     value:empEnquiries.length, colour:'gold'  },
     { icon:'👤', label:'Candidate Applications', value:candEnquiries.length, colour:'blue'  },
     { icon:'🔔', label:'Unread Messages',         value:unread,              colour:'red'   },
-    { icon:'💼', label:'Active Job Listings',     value:allJobs.length,      colour:'green' },
+    { icon:'💼', label:'Active Job Listings',     value:jobs.length,         colour:'green' },
   ];
 
   return (
     <div className="admin-shell">
-      {/* Backdrop overlay */}
       <div className={"admin-sidebar-overlay"+(sidebarOpen?" visible":"")} onClick={()=>setSidebarOpen(false)}/>
 
       <aside className={"admin-sidebar"+(sidebarOpen?" open":"")}>
@@ -1071,7 +1078,7 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
           {activeSection==='dashboard' && (
             <>
               <div className="admin-stats-row">
-                {statCards.map((s,i) => (
+                {statCards.map((s,i)=>(
                   <AdminStatCard key={i} icon={s.icon} label={s.label} value={s.value} colour={s.colour} delay={i*0.1}/>
                 ))}
               </div>
@@ -1081,9 +1088,12 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
                     <span className="admin-panel-card__title">Recent Enquiries</span>
                     <button className="btn btn--ghost btn--sm" onClick={()=>setActiveSection('enquiries')}>View All</button>
                   </div>
-                  {enquiries.length===0?(
-                    <div className="empty-state" style={{padding:'2rem'}}><div className="empty-state__icon">📭</div><p style={{fontFamily:'var(--font-body)',fontSize:'0.85rem',color:'var(--text-muted)'}}>No enquiries yet. They'll appear here when the contact form is submitted.</p></div>
-                  ):(
+                  {enquiries.length===0 ? (
+                    <div className="empty-state" style={{padding:'2rem'}}>
+                      <div className="empty-state__icon">📭</div>
+                      <p style={{fontFamily:'var(--font-body)',fontSize:'0.85rem',color:'var(--text-muted)'}}>No enquiries yet. They'll appear here when the contact form is submitted.</p>
+                    </div>
+                  ) : (
                     <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Name</th><th>Type</th><th>Company / Role</th><th>Status</th></tr></thead>
                       <tbody>{enquiries.slice(0,6).map(e=>(
                         <tr key={e.id} style={{cursor:'pointer'}} onClick={()=>{setViewEnquiry(e);if(!e.read)markRead(e.id);}}>
@@ -1101,9 +1111,16 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
                     <span className="admin-panel-card__title">Active Job Listings</span>
                     <button className="btn btn--ghost btn--sm" onClick={()=>setActiveSection('jobs')}>Manage</button>
                   </div>
-                  <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Title</th><th>Location</th><th>Type</th></tr></thead>
-                    <tbody>{allJobs.slice(0,6).map(j=><tr key={j.id}><td style={{fontWeight:600,fontSize:'0.82rem'}}>{getJobIcon(j.industry)} {j.title}</td><td style={{fontSize:'0.82rem'}}>{j.location}</td><td><span className="badge badge--active" style={{fontSize:'0.65rem'}}>{j.type}</span></td></tr>)}</tbody>
-                  </table></div>
+                  {jobs.length === 0 ? (
+                    <div className="empty-state" style={{padding:'2rem'}}>
+                      <div className="empty-state__icon">💼</div>
+                      <p style={{fontFamily:'var(--font-body)',fontSize:'0.85rem',color:'var(--text-muted)'}}>No jobs yet. Click "Job Listings" then "+ Post New Job" to add your first listing.</p>
+                    </div>
+                  ) : (
+                    <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Title</th><th>Location</th><th>Type</th></tr></thead>
+                      <tbody>{jobs.slice(0,6).map(j=><tr key={j.id}><td style={{fontWeight:600,fontSize:'0.82rem'}}>{getJobIcon(j.industry)} {j.title}</td><td style={{fontSize:'0.82rem'}}>{j.location}</td><td><span className="badge badge--active" style={{fontSize:'0.65rem'}}>{j.type}</span></td></tr>)}</tbody>
+                    </table></div>
+                  )}
                 </div>
               </div>
             </>
@@ -1123,7 +1140,6 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
                     <div className="form-group" style={{marginBottom:0}}><label className="form-label">Employment Type</label><select className="form-select" value={jobForm.type} onChange={e=>setJobForm(p=>({...p,type:e.target.value}))}><option>Permanent</option><option>Contract</option><option>Temporary</option><option>Part-time</option></select></div>
                     <div className="form-group" style={{marginBottom:0}}><label className="form-label">Industry</label><input className="form-input" placeholder="Finance, Hospitality, HR…" value={jobForm.industry} onChange={e=>setJobForm(p=>({...p,industry:e.target.value}))}/></div>
                   </div>
-                  {/* Salary field with permanent ₦ prefix */}
                   <div className="form-group" style={{marginBottom:'1rem'}}>
                     <label className="form-label">Salary Range</label>
                     <div className="salary-input-wrap">
@@ -1154,33 +1170,35 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
                   <span className="admin-panel-card__title">All Job Listings</span>
                   <div style={{display:'flex',gap:'0.75rem',alignItems:'center'}}>
                     <input className="form-input" placeholder="Search jobs…" value={jobSearch} onChange={e=>setJobSearch(e.target.value)} style={{width:'200px',padding:'0.5rem 0.75rem',fontSize:'0.82rem'}}/>
-                    <span className="admin-panel-card__meta">{filteredAdminJobs.length} of {allJobs.length}</span>
+                    <span className="admin-panel-card__meta">{filteredAdminJobs.length} of {jobs.length}</span>
                   </div>
                 </div>
-                {filteredAdminJobs.length===0?(
-                  <div className="empty-state"><div className="empty-state__icon">💼</div><h3 className="empty-state__title">No jobs found</h3></div>
-                ):(
+                {jobs.length === 0 ? (
+                  <div className="empty-state" style={{padding:'3rem'}}>
+                    <div className="empty-state__icon">💼</div>
+                    <h3 className="empty-state__title">No jobs posted yet</h3>
+                    <p className="empty-state__text">Click "+ Post New Job" above to add your first listing.</p>
+                  </div>
+                ) : filteredAdminJobs.length === 0 ? (
+                  <div className="empty-state"><div className="empty-state__icon">🔍</div><h3 className="empty-state__title">No jobs match your search</h3></div>
+                ) : (
                   <div className="admin-table-wrap">
                     <table className="admin-table">
-                      <thead><tr><th>Title</th><th>Location</th><th>Industry</th><th>Salary</th><th>Type</th><th>Source</th><th>Actions</th></tr></thead>
-                      <tbody>{filteredAdminJobs.map(j=>{
-                        const isCustom = customJobs.some(c=>c.id===j.id);
-                        return (
-                          <tr key={j.id}>
-                            <td style={{fontWeight:600}}>{getJobIcon(j.industry)} {j.title}</td>
-                            <td>📍 {j.location}</td>
-                            <td>{j.industry}</td>
-                            <td style={{fontSize:'0.8rem',color:'var(--text-muted)'}}>{j.salary||'—'}</td>
-                            <td><span className="badge badge--active">{j.type}</span></td>
-                            <td><span className={`badge ${isCustom?'badge--employer':'badge--read'}`}>{isCustom?'Custom':'Sample'}</span></td>
-                            <td><div className="td-actions">
-                              <button className="btn btn--ghost btn--icon" title="Edit" onClick={()=>editJob(j)} style={{opacity:isCustom?1:0.4,cursor:isCustom?'pointer':'not-allowed'}}>✏️</button>
-                              <button className="btn btn--ghost btn--icon" title="Duplicate" onClick={()=>duplicateJob(j)}>📋</button>
-                              {isCustom&&<button className="btn btn--danger btn--icon" title="Delete" onClick={()=>deleteJob(j.id)}>🗑️</button>}
-                            </div></td>
-                          </tr>
-                        );
-                      })}</tbody>
+                      <thead><tr><th>Title</th><th>Location</th><th>Industry</th><th>Salary</th><th>Type</th><th>Actions</th></tr></thead>
+                      <tbody>{filteredAdminJobs.map(j=>(
+                        <tr key={j.id}>
+                          <td style={{fontWeight:600}}>{getJobIcon(j.industry)} {j.title}</td>
+                          <td>📍 {j.location}</td>
+                          <td>{j.industry}</td>
+                          <td style={{fontSize:'0.8rem',color:'var(--text-muted)'}}>{j.salary||'—'}</td>
+                          <td><span className="badge badge--active">{j.type}</span></td>
+                          <td><div className="td-actions">
+                            <button className="btn btn--ghost btn--icon" title="Edit"   onClick={()=>editJob(j)}>✏️</button>
+                            <button className="btn btn--ghost btn--icon" title="Duplicate" onClick={()=>duplicateJob(j)}>📋</button>
+                            <button className="btn btn--danger btn--icon" title="Delete"  onClick={()=>deleteJob(j.id)}>🗑️</button>
+                          </div></td>
+                        </tr>
+                      ))}</tbody>
                     </table>
                   </div>
                 )}
@@ -1201,9 +1219,9 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
                 ))}
               </div>
               <div className="admin-tab-content">
-                {filteredEnquiries.length===0?(
+                {filteredEnquiries.length===0 ? (
                   <div className="empty-state"><div className="empty-state__icon">📭</div><h3 className="empty-state__title">No enquiries found</h3><p className="empty-state__text">Enquiries submitted through the contact form will appear here.</p></div>
-                ):(
+                ) : (
                   <div className="admin-table-wrap">
                     <table className="admin-table">
                       <thead><tr><th>Name</th><th>Type</th><th>Email</th><th>Company / Role</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
@@ -1216,7 +1234,7 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
                           <td style={{fontSize:'0.8rem',color:'var(--text-muted)'}}>{new Date(e.date).toLocaleDateString('en-GB')}</td>
                           <td><span className={`badge ${e.read?'badge--read':'badge--new'}`}>{e.read?'Read':'New'}</span></td>
                           <td onClick={ev=>ev.stopPropagation()}><div className="td-actions">
-                            <button className="btn btn--ghost btn--sm" onClick={()=>{setViewEnquiry(e);}}>View</button>
+                            <button className="btn btn--ghost btn--sm" onClick={()=>setViewEnquiry(e)}>View</button>
                             <a href={`mailto:${e.email}?subject=Re: Your enquiry — JVG Recruitment`} className="btn btn--ghost btn--icon" title="Reply">✉️</a>
                             <button className="btn btn--danger btn--icon" title="Delete" onClick={()=>deleteEnquiry(e.id)}>🗑️</button>
                           </div></td>
@@ -1278,7 +1296,7 @@ function Footer({ setPage }) {
             <p className="footer__col-title">Contact</p>
             <div className="footer__links">
               <a href="mailto:info@jvgrecruitmentsolutions.com">info@jvgrecruitmentsolutions.com</a>
-              <a href="tel:+234 704 745 3599">+234 704 745 3599</a>
+              <a href="tel:+2347047453599">+234 704 745 3599</a>
               <a href="#">11, Aliyu Mohammed Road TAK Continental Estate Life Camp FCT Abuja</a>
               <a href="#">Mon–Sat 8am–6pm WAT</a>
             </div>
