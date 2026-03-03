@@ -17,15 +17,6 @@ const ADMIN_PASSWORD = 'jvgadmin862';
 
 // ================================================================
 //  🔥 FIREBASE CONFIG — REPLACE THESE VALUES WITH YOUR OWN
-//  Steps:
-//  1. Go to https://firebase.google.com → sign in → "Add project"
-//  2. Name it (e.g. jvg-recruitment) → continue through setup
-//  3. Left sidebar → Firestore Database → Create database
-//     → "Start in test mode" → pick a region → Enable
-//  4. Left sidebar → Project Settings (gear icon)
-//     → scroll to "Your apps" → click </> (Web) icon
-//     → register app → copy the firebaseConfig below
-//  5. Replace EVERY value below with your own values
 // ================================================================
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyACl_R12VThr9vvWZPnpAM0lxJ0CK8iS6o",
@@ -37,68 +28,42 @@ const FIREBASE_CONFIG = {
   measurementId:     "G-SL9H98RD4S"
 };
 
-// ── FIREBASE SDK (loaded from CDN in index.html) ─────────────
-// Lazy getter — initialises Firebase the FIRST time getDb() is
-// called. This guarantees the compat SDK scripts are fully loaded
-// before we touch the firebase global, regardless of how fast
-// Babel compiles app.jsx.
-
 let _db = null;
 
 function getDb() {
   if (_db) return _db;
   try {
-    if (typeof firebase === 'undefined') {
-      console.warn('Firebase SDK not available');
-      return null;
-    }
-    if (!firebase.apps || !firebase.apps.length) {
-      firebase.initializeApp(FIREBASE_CONFIG);
-    }
+    if (typeof firebase === 'undefined') { console.warn('Firebase SDK not available'); return null; }
+    if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     _db = firebase.firestore();
     return _db;
-  } catch (e) {
-    console.warn('Firebase init error:', e.message);
-    return null;
-  }
+  } catch (e) { console.warn('Firebase init error:', e.message); return null; }
 }
 
-// ── FIRESTORE HELPERS ─────────────────────────────────────────
 async function fbGetJobs() {
-  const db = getDb();
-  if (!db) return [];
+  const db = getDb(); if (!db) return [];
   try {
     const snap = await db.collection('jobs').orderBy('createdAt', 'desc').get();
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  } catch (e) {
-    console.warn('fbGetJobs error:', e.message);
-    return [];
-  }
+  } catch (e) { console.warn('fbGetJobs error:', e.message); return []; }
 }
 
 async function fbSaveJob(jobData) {
   const db = getDb();
-  if (!db) throw new Error('Firebase not initialised — check your config in app.jsx and that the Firebase SDK scripts are loading in index.html');
-  const ref = await db.collection('jobs').add({
-    ...jobData,
-    adminSecret: ADMIN_PASSWORD,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
+  if (!db) throw new Error('Firebase not initialised');
+  const ref = await db.collection('jobs').add({ ...jobData, adminSecret: ADMIN_PASSWORD, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
   return ref.id;
 }
 
 async function fbUpdateJob(id, jobData) {
   const db = getDb();
-  if (!db) throw new Error('Firebase not initialised — check your config in app.jsx and that the Firebase SDK scripts are loading in index.html');
-  await db.collection('jobs').doc(id).update({
-    ...jobData,
-    adminSecret: ADMIN_PASSWORD
-  });
+  if (!db) throw new Error('Firebase not initialised');
+  await db.collection('jobs').doc(id).update({ ...jobData, adminSecret: ADMIN_PASSWORD });
 }
 
 async function fbDeleteJob(id) {
   const db = getDb();
-  if (!db) throw new Error('Firebase not initialised — check your config in app.jsx and that the Firebase SDK scripts are loading in index.html');
+  if (!db) throw new Error('Firebase not initialised');
   await db.collection('jobs').doc(id).delete();
 }
 
@@ -106,19 +71,13 @@ function fbSubscribeJobs(callback) {
   const db = getDb();
   if (!db) { setTimeout(() => callback([]), 100); return () => {}; }
   try {
-    return db.collection('jobs')
-      .orderBy('createdAt', 'desc')
-      .onSnapshot(snap => {
-        const jobs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        callback(jobs);
-      }, err => console.warn('fbSubscribeJobs error:', err.message));
-  } catch (e) {
-    console.warn('fbSubscribeJobs setup error:', e.message);
-    return () => {};
-  }
+    return db.collection('jobs').orderBy('createdAt', 'desc').onSnapshot(
+      snap => callback(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      err => console.warn('fbSubscribeJobs error:', err.message)
+    );
+  } catch (e) { console.warn('fbSubscribeJobs setup error:', e.message); return () => {}; }
 }
 
-// Helper — send via EmailJS
 async function sendEmail(templateId, params) {
   if (typeof emailjs === 'undefined') throw new Error('EmailJS SDK not loaded');
   const response = await emailjs.send(EMAILJS_SERVICE_ID, templateId, params);
@@ -404,7 +363,7 @@ function AboutSection() {
               </div>
               <div style={{marginTop:'2rem',padding:'1.5rem',background:'var(--gold-glow)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
                 <div className="eyebrow" style={{marginBottom:'0.5rem'}}>Our Commitment</div>
-                <p style={{fontFamily:'var(--font-body)',fontSize:'0.88rem',fontWeight:300,color:'var(--text-secondary)',lineHeight:1.7}}>Every placement comes with our 90-day guarantee. If a hire doesn't work out, we find a replacement at no additional cost.</p>
+                <p style={{fontFamily:'var(--font-body)',fontSize:'0.88rem',fontWeight:300,color:'var(--text-secondary)',lineHeight:1.75}}>Every placement comes with our 90-day guarantee. If a hire doesn't work out, we find a replacement at no additional cost.</p>
               </div>
             </div>
           </div>
@@ -584,7 +543,7 @@ function PageHero({ eyebrow, title, subtitle, stats }) {
       <div className="container" ref={heroRef}>
         <p className={`eyebrow reveal${heroVis?' visible':''}`} style={{marginBottom:'1rem'}}>{eyebrow}</p>
         <h1 className={`display-lg reveal reveal-delay-1${heroVis?' visible':''}`}>{title}</h1>
-        {subtitle && <p className={`reveal reveal-delay-2${heroVis?' visible':''}`} style={{fontFamily:'var(--font-body)',fontSize:'1.05rem',fontWeight:300,color:'var(--text-secondary)',maxWidth:'540px',margin:'1rem auto 0',lineHeight:1.75}}>{subtitle}</p>}
+        {subtitle && <p className={`reveal reveal-delay-2${heroVis?' visible':''}`} style={{fontFamily:'var(--font-body)',fontSize:'1.05rem',fontWeight:300,color:'var(--text-secondary)',maxWidth:'540px',margin:'1rem auto 0',lineHeight:1.8}}>{subtitle}</p>}
         {stats && (
           <div className="page-hero__stats" style={{marginTop:'3rem'}}>
             {stats.map((s,i) => <PageHeroStatItem key={i} stat={s} delay={i*0.1}/>)}
@@ -772,7 +731,10 @@ function AboutPage({ setPage }) {
                   {[{icon:'🤝',title:'Integrity',text:'We operate with full transparency — no hidden fees, no false promises, no shortcuts.'},{icon:'⚡',title:'Speed',text:'We move fast without cutting corners. Your urgency is our priority.'},{icon:'🎯',title:'Precision',text:'Every candidate we present is thoroughly assessed — technically and culturally.'},{icon:'🌍',title:'Partnership',text:'We become an extension of your team, not just a vendor you call once.'},{icon:'🏆',title:'Excellence',text:'We hold ourselves to the highest standard in everything we deliver.'}].map((v,i)=>(
                     <div key={i} style={{display:'flex',alignItems:'flex-start',gap:'0.85rem',padding:'1rem',background:'var(--bg-secondary)',borderRadius:'var(--radius-md)',border:'1px solid var(--border)'}}>
                       <span style={{fontSize:'1.4rem',flexShrink:0}}>{v.icon}</span>
-                      <div><div style={{fontFamily:'var(--font-display)',fontWeight:600,fontSize:'0.95rem',marginBottom:'0.25rem'}}>{v.title}</div><div style={{fontFamily:'var(--font-body)',fontSize:'0.82rem',fontWeight:300,color:'var(--text-secondary)',lineHeight:1.65}}>{v.text}</div></div>
+                      <div>
+                        <div style={{fontFamily:'var(--font-display)',fontWeight:600,fontSize:'1rem',marginBottom:'0.25rem'}}>{v.title}</div>
+                        <div style={{fontFamily:'var(--font-body)',fontSize:'0.82rem',fontWeight:300,color:'var(--text-secondary)',lineHeight:1.7}}>{v.text}</div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -797,12 +759,7 @@ function JobsPage({ setPage }) {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    // Real-time listener — updates instantly when admin posts/edits/deletes
-    const unsubscribe = fbSubscribeJobs(liveJobs => {
-      setJobs(liveJobs);
-      setLoading(false);
-    });
-    // Fallback: if Firebase not configured, stop loading after 3s
+    const unsubscribe = fbSubscribeJobs(liveJobs => { setJobs(liveJobs); setLoading(false); });
     const timeout = setTimeout(() => setLoading(false), 3000);
     return () => { unsubscribe(); clearTimeout(timeout); };
   }, []);
@@ -818,7 +775,6 @@ function JobsPage({ setPage }) {
     <>
       <PageHero eyebrow="Opportunities" title="Find Your Next Role" subtitle="Browse current openings across Nigeria's leading employers." stats={JOBS_PAGE_STATS}/>
       <section className="section"><div className="container">
-
         {loading ? (
           <div className="empty-state">
             <div className="empty-state__icon" style={{animation:'spin 1s linear infinite',display:'inline-block'}}>⏳</div>
@@ -853,7 +809,6 @@ function JobsPage({ setPage }) {
             )}
           </>
         )}
-
         <div style={{textAlign:'center',marginTop:'3rem'}}>
           <p style={{fontFamily:'var(--font-body)',color:'var(--text-muted)',marginBottom:'1rem',fontSize:'0.88rem',fontWeight:300}}>Don't see what you're looking for? Send us a speculative application.</p>
           <button className="btn btn--outline" onClick={()=>setPage('contact')}>Register Your Interest →</button>
@@ -869,7 +824,7 @@ function JobsPage({ setPage }) {
             </div>
             <div className="job-card__meta" style={{marginBottom:'0.75rem'}}><span>📍 {modalJob.location}</span><span style={{marginLeft:'1rem'}}>🏢 {modalJob.industry}</span></div>
             {modalJob.salary && <div style={{marginBottom:'1.5rem'}}><span className="job-card__salary-value" style={{fontSize:'1rem'}}>💰 {modalJob.salary}</span></div>}
-            {modalJob.description ? <div className="job-description" dangerouslySetInnerHTML={{__html:modalJob.description}}/> : <p style={{fontFamily:'var(--font-body)',fontSize:'0.92rem',fontWeight:300,color:'var(--text-secondary)',lineHeight:1.75,marginBottom:'2rem'}}>{modalJob.excerpt}</p>}
+            {modalJob.description ? <div className="job-description" dangerouslySetInnerHTML={{__html:modalJob.description}}/> : <p style={{fontFamily:'var(--font-body)',fontSize:'0.92rem',fontWeight:300,color:'var(--text-secondary)',lineHeight:1.8,marginBottom:'2rem'}}>{modalJob.excerpt}</p>}
             <div style={{display:'flex',gap:'0.75rem',marginTop:'2rem',flexWrap:'wrap'}}><button className="btn btn--primary" style={{flex:1}} onClick={()=>{setModalJob(null);setApplyJob(modalJob);}}>Apply for This Role →</button></div>
           </div>
         </div>
@@ -993,7 +948,7 @@ function AdminStatCard({ icon, label, value, colour, delay }) {
 }
 
 // ============================================================
-// ADMIN PANEL — Jobs saved to Firebase, visible to all
+// ADMIN PANEL
 // ============================================================
 function AdminPanel({ onClose, toggleTheme, theme }) {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -1012,7 +967,6 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
   const emptyJob = { title:'', type:'Permanent', location:'', industry:'', salaryAmount:'', excerpt:'', description:'' };
   const [jobForm, setJobForm] = useState(emptyJob);
 
-  // Subscribe to Firebase live feed
   useEffect(() => {
     const unsub = fbSubscribeJobs(liveJobs => { setJobs(liveJobs); setJobsLoading(false); });
     const timeout = setTimeout(() => setJobsLoading(false), 4000);
@@ -1060,9 +1014,7 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
         setSaveMsg('🚀 Job published — visible to everyone now!');
       }
       setJobForm(emptyJob); setShowJobForm(false); setEditingJob(null);
-    } catch(e) {
-      setSaveMsg('❌ Error: ' + e.message + '. Check your Firebase config in app.jsx.');
-    }
+    } catch(e) { setSaveMsg('❌ Error: ' + e.message); }
     setSaving(false);
     setTimeout(() => setSaveMsg(''), 5000);
   };
@@ -1147,7 +1099,6 @@ function AdminPanel({ onClose, toggleTheme, theme }) {
               <div className="admin-stats-row">
                 {statCards.map((s,i)=><AdminStatCard key={i} icon={s.icon} label={s.label} value={s.value} colour={s.colour} delay={i*0.1}/>)}
               </div>
-              {/* Firebase config warning banner */}
               {FIREBASE_CONFIG.apiKey === 'REPLACE_WITH_YOUR_API_KEY' && (
                 <div style={{background:'rgba(192,57,43,0.1)',border:'1px solid rgba(192,57,43,0.3)',borderRadius:'var(--radius-md)',padding:'1rem 1.25rem',marginBottom:'1.5rem',fontFamily:'var(--font-body)',fontSize:'0.86rem',color:'#c0392b'}}>
                   <strong>⚠️ Firebase not configured yet.</strong> Jobs you post will not be visible to site visitors until you add your Firebase config to app.jsx. <a href="https://firebase.google.com" target="_blank" rel="noreferrer" style={{color:'#c0392b',textDecoration:'underline'}}>Set up Firebase free →</a>
