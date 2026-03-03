@@ -130,21 +130,21 @@ function useCountUp(targetStr, duration = 3200, triggered = false) {
 // DATA
 // ============================================================
 const HERO_STATS = [
-  { value:'500+', label:'Placements Made' }, { value:'80+', label:'Client Partners' },
+  { value:'5000+', label:'Placements Made' }, { value:'200+', label:'Client Partners' },
   { value:'15+', label:'Industries Served' }, { value:'96%', label:'Satisfaction Rate' },
 ];
-const ABOUT_STATS = [{ value:'10+', label:'Years Experience' }, { value:'500+', label:'Placements Made' }];
+const ABOUT_STATS = [{ value:'10+', label:'Years Experience' }, { value:'5000+', label:'Placements Made' }];
 const ABOUT_PAGE_STATS = [
-  { value:'10+', label:'Years in Business' }, { value:'500+', label:'Successful Placements' },
-  { value:'80+', label:'Corporate Clients' }, { value:'15+', label:'Industries Covered' }, { value:'96%', label:'Client Satisfaction' },
+  { value:'10+', label:'Years in Business' }, { value:'5000+', label:'Successful Placements' },
+  { value:'200+', label:'Corporate Clients' }, { value:'15+', label:'Industries Covered' }, { value:'96%', label:'Client Satisfaction' },
 ];
 const JOBS_PAGE_STATS = [
-  { value:'500+', label:'Candidates Placed' },
-  { value:'80+', label:'Hiring Partners' }, { value:'15+', label:'Sectors' }, { value:'48', label:'Hrs Avg Placement' },
+  { value:'5000+', label:'Candidates Placed' },
+  { value:'200+', label:'Hiring Partners' }, { value:'15+', label:'Sectors' }, { value:'48', label:'Hrs Avg Placement' },
 ];
 const CONTACT_PAGE_STATS = [
-  { value:'24', label:'Hour Response Time' }, { value:'80+', label:'Happy Clients' },
-  { value:'500+', label:'Careers Launched' }, { value:'96%', label:'Repeat Business Rate' },
+  { value:'24', label:'Hour Response Time' }, { value:'200+', label:'Happy Clients' },
+  { value:'5000+', label:'Careers Launched' }, { value:'96%', label:'Repeat Business Rate' },
 ];
 const BENEFITS = [
   { icon:'⚡', title:'Speed to Hire', text:'Our pre-vetted talent pool means you get shortlisted candidates within 48 hours — not weeks.' },
